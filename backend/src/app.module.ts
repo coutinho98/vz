@@ -7,6 +7,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
 import { CatalogModule } from './catalog/catalog.module';
 import { EventsModule } from './events/events.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     CatalogModule,
     EventsModule,
+    ReservationsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
