@@ -3,9 +3,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EventItem } from '../../api/types';
 import { api, apiErrorMessage, formatBRL, formatDateTime } from '../../api/client';
 import { Badge, ErrorBox, Spinner } from '../../components/ui';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const statusBadge = (status: EventItem['status']) =>
-  status === 'PUBLISHED' ? 'green' : status === 'DRAFT' ? 'amber' : 'red';
+  status === 'PUBLISHED' ? 'success' : status === 'DRAFT' ? 'warning' : 'destructive';
 
 const statusLabel = (status: EventItem['status']) =>
   status === 'PUBLISHED' ? 'Publicado' : status === 'DRAFT' ? 'Rascunho' : 'Cancelado';
@@ -29,103 +38,98 @@ export default function OrganizerEventsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Meus eventos</h1>
-          <p className="mt-1 text-zinc-400">
+          <h1 className="font-head text-3xl tracking-tight">Meus eventos</h1>
+          <p className="mt-1 text-muted-foreground">
             Publique, cancele e acompanhe os eventos que você organiza.
           </p>
         </div>
-        <Link
-          to="/organizador/novo"
-          className="rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300"
-        >
-          + Criar evento
-        </Link>
+        <Button render={<Link to="/organizador/novo" />}>+ Criar evento</Button>
       </div>
 
       {isPending && <Spinner label="Carregando eventos…" />}
       {isError && <ErrorBox message={apiErrorMessage(error)} />}
 
       {events && events.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-zinc-800 py-16 text-center text-zinc-400">
+        <div className="rounded border-2 border-dashed border-black/40 py-16 text-center text-muted-foreground">
           Você ainda não criou eventos. Comece escolhendo um filme ou show no catálogo.
         </div>
       )}
 
       {events && events.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-zinc-800">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-900/60 text-left text-xs uppercase tracking-wide text-zinc-500">
-                <th className="px-4 py-3">Evento</th>
-                <th className="px-4 py-3">Quando</th>
-                <th className="px-4 py-3">Preço</th>
-                <th className="px-4 py-3">Vendidos</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="overflow-x-auto rounded border-2 border-black bg-card shadow-md">
+          <Table className="min-w-[760px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Evento</TableHead>
+                <TableHead>Quando</TableHead>
+                <TableHead>Preço</TableHead>
+                <TableHead>Vendidos</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {events.map((event) => (
-                <tr key={event.id} className="border-b border-zinc-800/60 last:border-0">
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{event.title}</p>
-                    <p className="text-xs text-zinc-500">
+                <TableRow key={event.id}>
+                  <TableCell>
+                    <p className="font-bold">{event.title}</p>
+                    <p className="font-mono text-xs text-muted-foreground">
                       {event.venue} · {event.city} ·{' '}
                       {event.seatingMode === 'SEATED'
-                        ? `${event.rowsCount}×${event.seatsPerRow} assentos`
+                        ? `${event.rowsCount}×${event.seatsPerRow}`
                         : `pista ${event.capacity}p`}
                     </p>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-300">
-                    {formatDateTime(event.startsAt)}
-                  </td>
-                  <td className="px-4 py-3">{formatBRL(event.priceCents)}</td>
-                  <td className="px-4 py-3 text-zinc-300">
-                    {event._count?.tickets ?? 0}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell>{formatDateTime(event.startsAt)}</TableCell>
+                  <TableCell className="font-bold">{formatBRL(event.priceCents)}</TableCell>
+                  <TableCell>{event._count?.tickets ?? 0}</TableCell>
+                  <TableCell>
                     <Badge tone={statusBadge(event.status)}>{statusLabel(event.status)}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell>
                     <div className="flex justify-end gap-2">
                       {event.status === 'DRAFT' && (
                         <>
-                          <button
+                          <Button
+                            size="xs"
+                            className="bg-green-500 hover:bg-green-600"
                             onClick={() => act.mutate({ id: event.id, action: 'publish' })}
-                            className="rounded-lg bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/25"
                           >
                             Publicar
-                          </button>
-                          <Link
-                            to={`/organizador/${event.id}/editar`}
-                            className="rounded-lg border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:border-zinc-500"
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            render={<Link to={`/organizador/${event.id}/editar`} />}
                           >
                             Editar
-                          </Link>
+                          </Button>
                         </>
                       )}
                       {event.status === 'PUBLISHED' && (
                         <>
-                          <Link
-                            to={`/portaria/${event.id}`}
-                            className="rounded-lg border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:border-amber-400 hover:text-amber-300"
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            render={<Link to={`/portaria/${event.id}`} />}
                           >
                             Portaria
-                          </Link>
-                          <button
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="xs"
                             onClick={() => act.mutate({ id: event.id, action: 'cancel' })}
-                            className="rounded-lg bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300 transition hover:bg-red-500/20"
                           >
                             Cancelar
-                          </button>
+                          </Button>
                         </>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
