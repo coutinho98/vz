@@ -90,9 +90,26 @@ export class GateService {
       };
     }
 
-    const updated = await this.prisma.ticket.update({
-      where: { id: ticket.id },
+    // update atômico: só marca USED se ainda estiver VALID — duas
+    // leituras simultâneas não podem validar o mesmo ingresso duas vezes
+    const claimed = await this.prisma.ticket.updateMany({
+      where: { id: ticket.id, status: 'VALID' },
       data: { status: 'USED', checkedInAt: new Date() },
+    });
+    if (claimed.count === 0) {
+      const fresh = await this.prisma.ticket.findUniqueOrThrow({
+        where: { id: ticket.id },
+        include: { user: { select: { name: true } } },
+      });
+      return {
+        status: 'ALREADY_USED',
+        message: `Ingresso já utilizado em ${this.formatDateTime(fresh.checkedInAt)}.`,
+        ticket: this.toTicketDto(fresh),
+      };
+    }
+
+    const updated = await this.prisma.ticket.findUniqueOrThrow({
+      where: { id: ticket.id },
       include: { user: { select: { name: true } } },
     });
 
