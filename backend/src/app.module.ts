@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { CatalogModule } from './catalog/catalog.module';
+import { EventsModule } from './events/events.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     AuthModule,
     CatalogModule,
+    EventsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
