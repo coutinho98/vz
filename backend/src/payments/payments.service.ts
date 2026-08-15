@@ -1,0 +1,88 @@
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
+import { ReservationsService } from '../reservations/reservations.service';
+import { TicketsService } from '../tickets/tickets.service';
+import { PayReservationDto } from './dto/pay-reservation.dto';
+
+const DECLINE_SUFFIX = '0002';
+
+@Injectable()
+export class PaymentsService {
+  constructor(
+    private prisma: PrismaService,
+    private reservationsService: ReservationsService,
+    private ticketsService: TicketsService,
+  ) {}
+
+  async pay(user: AuthUser, reservationId: string, dto: PayReservationDto) {
+    await this.reservationsService.expireStale();
+
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { event: true, seats: true },
+    });
+    if (!reservation) throw new NotFoundException('Reserva não encontrada');
+    if (reservation.userId !== user.id) {
+      throw new ForbiddenException('Esta reserva não pertence a você');
+    }
+    if (reservation.status === 'CANCELLED') {
+      throw new BadRequestException('Reserva expirada ou cancelada');
+    }
+    if (reservation.status === 'CONFIRMED') {
+      throw new BadRequestException('Reserva já foi paga');
+    }
+
+    const declined = dto.cardNumber.endsWith(DECLINE_SUFFIX);
+    const brand = this.detectBrand(dto.cardNumber);
+    const last4 = dto.cardNumber.slice(-4);
+
+    if (declined) {
+      const payment = await this.prisma.payment.create({
+        data: {
+          reservationId: reservation.id,
+          status: 'DECLINED',
+          cardBrand: brand,
+          cardLast4: last4,
+          amountCents: reservation.totalCents,
+        },
+      });
+      return { outcome: 'DECLINED', payment, tickets: [] };
+    }
+
+    const payment = await this.prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.create({
+        data: {
+          reservationId: reservation.id,
+          status: 'APPROVED',
+          cardBrand: brand,
+          cardLast4: last4,
+          amountCents: reservation.totalCents,
+        },
+      });
+
+      await tx.reservation.update({
+        where: { id: reservation.id },
+        data: { status: 'CONFIRMED' },
+      });
+
+      return payment;
+    });
+
+    const tickets = await this.ticketsService.issueForReservation(reservation);
+    return { outcome: 'APPROVED', payment, tickets };
+  }
+
+  private detectBrand(cardNumber: string) {
+    if (cardNumber.startsWith('4')) return 'Visa';
+    if (/^5[1-5]/.test(cardNumber)) return 'Mastercard';
+    if (/^3[47]/.test(cardNumber)) return 'Amex';
+    if (cardNumber.startsWith('6')) return 'Elo';
+    return 'Cartão';
+  }
+}
