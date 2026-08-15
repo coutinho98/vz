@@ -2,42 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Html5Qrcode } from 'html5-qrcode';
+import { Check, X, AlertTriangle } from 'lucide-react';
 import type { CheckInResponse, EventItem } from '../../api/types';
 import { api, apiErrorMessage, formatDateTime } from '../../api/client';
 import { Spinner } from '../../components/ui';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type LastCheck =
   | { kind: 'ok'; result: CheckInResponse }
   | { kind: 'error'; message: string };
-
-const statusVisual = (status: CheckInResponse['status']) => {
-  switch (status) {
-    case 'VALID':
-      return {
-        border: 'border-emerald-500/60',
-        bg: 'bg-emerald-500/10',
-        title: 'ENTRADA LIBERADA',
-        titleCls: 'text-emerald-400',
-        icon: '✓',
-      };
-    case 'ALREADY_USED':
-      return {
-        border: 'border-amber-500/60',
-        bg: 'bg-amber-500/10',
-        title: 'JÁ UTILIZADO',
-        titleCls: 'text-amber-400',
-        icon: '!',
-      };
-    default:
-      return {
-        border: 'border-red-500/60',
-        bg: 'bg-red-500/10',
-        title: 'INGRESSO INVÁLIDO',
-        titleCls: 'text-red-400',
-        icon: '×',
-      };
-  }
-};
 
 export default function GateCheckPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -117,141 +93,132 @@ export default function GateCheckPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const visual = last?.kind === 'ok' ? statusVisual(last.result.status) : null;
+  const result = last?.kind === 'ok' ? last.result : null;
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <Link to="/portaria" className="text-sm text-zinc-500 hover:text-zinc-300">
+          <Link to="/portaria" className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:underline">
             ← Portaria
           </Link>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">
+          <h1 className="mt-1 font-head text-2xl tracking-tight">
             {event?.title ?? 'Validação de ingressos'}
           </h1>
           {event && (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               {formatDateTime(event.startsAt)} · {event.venue}
             </p>
           )}
         </div>
       </div>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Leitor de QR Code</h2>
-          {cameraOn ? (
-            <button
-              onClick={() => void stopCamera()}
-              className="rounded-lg border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:border-red-400 hover:text-red-300"
-            >
-              Parar câmera
-            </button>
-          ) : (
-            <button
-              onClick={() => void startCamera()}
-              className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold text-zinc-950 transition hover:bg-amber-300"
-            >
-              Liga câmera
-            </button>
-          )}
-        </div>
+      <Card>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-head">Leitor de QR Code</h2>
+            {cameraOn ? (
+              <Button variant="outline" size="sm" onClick={() => void stopCamera()}>
+                Parar câmera
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => void startCamera()}>
+                Ligar câmera
+              </Button>
+            )}
+          </div>
 
-        <div
-          id="qr-reader"
-          className={`mt-4 overflow-hidden rounded-xl border ${
-            cameraOn ? 'border-amber-400/60' : 'border-dashed border-zinc-700'
-          } ${cameraOn ? '' : 'bg-zinc-950/60'}`}
-        >
-          {!cameraOn && (
-            <p className="px-4 py-10 text-center text-sm text-zinc-500">
-              Câmera desligada — clique em “Ligar câmera” para escanear o ingresso
-              ou use a digitação manual abaixo.
-            </p>
-          )}
-        </div>
-        {camError && (
-          <p className="mt-2 text-xs text-amber-400/90">{camError}</p>
-        )}
-      </section>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const code = extractCode(manualCode);
-          if (code) {
-            setLast(null);
-            checkIn.mutate(code);
-          }
-        }}
-        className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"
-      >
-        <h2 className="font-semibold">Digitação manual</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Digite o código do ingresso (ex.: ING-AB2CD-3EFGH) ou cole o link /t/…
-        </p>
-        <div className="mt-3 flex gap-2">
-          <input
-            value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
-            placeholder="ING-XXXXX-XXXXX"
-            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 font-mono text-sm uppercase tracking-wider outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-zinc-600 focus:border-amber-400"
-          />
-          <button
-            disabled={checkIn.isPending || !manualCode.trim()}
-            className="rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:opacity-40"
+          <div
+            id="qr-reader"
+            className={`rounded border-2 ${cameraOn ? 'border-black' : 'border-dashed border-black/40 bg-muted/40'}`}
           >
-            Validar
-          </button>
-        </div>
-      </form>
+            {!cameraOn && (
+              <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                Câmera desligada — clique em “Ligar câmera” para escanear o ingresso
+                ou use a digitação manual abaixo.
+              </p>
+            )}
+          </div>
+          {camError && (
+            <p className="font-mono text-xs text-destructive">{camError}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3">
+          <h2 className="font-head">Digitação manual</h2>
+          <p className="font-mono text-xs text-muted-foreground">
+            código do ingresso (ING-XXXXX-XXXXX) ou cole o link /t/…
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const code = extractCode(manualCode);
+              if (code) {
+                setLast(null);
+                checkIn.mutate(code);
+              }
+            }}
+            className="flex gap-2"
+          >
+            <Input
+              value={manualCode}
+              onChange={(e) => setManualCode(e.target.value)}
+              placeholder="ING-XXXXX-XXXXX"
+              className="flex-1 font-mono uppercase tracking-wider"
+            />
+            <Button disabled={checkIn.isPending || !manualCode.trim()}>Validar</Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {checkIn.isPending && <Spinner label="Validando…" />}
 
       {last?.kind === 'error' && (
-        <div className={`rounded-2xl border p-5 ${statusVisual('INVALID').border} ${statusVisual('INVALID').bg}`}>
-          <p className={`text-lg font-black tracking-wide ${statusVisual('INVALID').titleCls}`}>
-            × FALHA NA VALIDAÇÃO
-          </p>
-          <p className="mt-1 text-sm text-zinc-300">{last.message}</p>
-        </div>
+        <Alert status="error">
+          <X />
+          <AlertTitle>Falha na validação</AlertTitle>
+          <AlertDescription>{last.message}</AlertDescription>
+        </Alert>
       )}
 
-      {last?.kind === 'ok' && visual && (
-        <div
-          className={`rounded-2xl border p-5 ${visual.border} ${visual.bg}`}
-          role="status"
+      {result && (
+        <Alert
+          status={
+            result.status === 'VALID'
+              ? 'success'
+              : result.status === 'ALREADY_USED'
+                ? 'warning'
+                : 'error'
+          }
         >
-          <div className="flex items-center gap-3">
-            <span
-              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-xl font-black ${visual.titleCls}`}
-            >
-              {visual.icon}
-            </span>
-            <p className={`text-lg font-black tracking-wide ${visual.titleCls}`}>
-              {visual.title}
-            </p>
-          </div>
-          <p className="mt-2 text-sm text-zinc-200">{last.result.message}</p>
-          {last.result.ticket && (
-            <div className="mt-3 grid gap-1 rounded-xl bg-zinc-950/60 p-3 text-sm text-zinc-300">
-              <p>
-                Código: <code className="tracking-wider">{last.result.ticket.code}</code>
-              </p>
-              <p>
-                Titular: {last.result.ticket.holderFirstName}
-                {last.result.ticket.seatLabel
-                  ? ` · Lugar ${last.result.ticket.seatLabel}`
-                  : ` · ${last.result.ticket.quantity} pessoa(s)`}
-              </p>
-              {last.result.ticket.checkedInAt && (
-                <p className="text-zinc-500">
-                  Check-in: {formatDateTime(last.result.ticket.checkedInAt)}
+          {result.status === 'VALID' ? <Check /> : result.status === 'ALREADY_USED' ? <AlertTriangle /> : <X />}
+          <AlertTitle>
+            {result.status === 'VALID'
+              ? 'Entrada liberada'
+              : result.status === 'ALREADY_USED'
+                ? 'Ingresso já utilizado'
+                : 'Ingresso inválido'}
+          </AlertTitle>
+          <AlertDescription>
+            {result.message}
+            {result.ticket && (
+              <div className="mt-2 grid gap-1 rounded border-2 border-black/30 bg-card/60 p-3 font-mono text-xs">
+                <p>código: {result.ticket.code}</p>
+                <p>
+                  titular: {result.ticket.holderFirstName}
+                  {result.ticket.seatLabel
+                    ? ` · lugar ${result.ticket.seatLabel}`
+                    : ` · ${result.ticket.quantity}p`}
                 </p>
-              )}
-            </div>
-          )}
-        </div>
+                {result.ticket.checkedInAt && (
+                  <p>check-in: {formatDateTime(result.ticket.checkedInAt)}</p>
+                )}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );
