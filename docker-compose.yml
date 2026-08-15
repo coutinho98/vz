@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ingressa
+      POSTGRES_PASSWORD: ingressa
+      POSTGRES_DB: ingressa
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ingressa -d ingressa']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://ingressa:ingressa@db:5432/ingressa?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      PORT: 3000
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && node dist/src/main.js"
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        # em producao o front nao usa proxy: aponta direto para a api
+        VITE_API_URL: http://localhost:3000/api
+    ports:
+      - '5173:5173'
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

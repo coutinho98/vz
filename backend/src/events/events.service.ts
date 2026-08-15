@@ -81,13 +81,13 @@ export class EventsService {
     const where: Prisma.EventWhereInput = {
       status: 'PUBLISHED',
       ...(query.category ? { category: query.category } : {}),
-      ...(query.city ? { city: { contains: query.city } } : {}),
+      ...(query.city ? { city: { contains: query.city, mode: 'insensitive' } } : {}),
       ...(query.search
         ? {
             OR: [
-              { title: { contains: query.search } },
-              { venue: { contains: query.search } },
-              { city: { contains: query.search } },
+              { title: { contains: query.search, mode: 'insensitive' } },
+              { venue: { contains: query.search, mode: 'insensitive' } },
+              { city: { contains: query.search, mode: 'insensitive' } },
             ],
           }
         : {}),

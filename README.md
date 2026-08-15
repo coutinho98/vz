@@ -9,8 +9,8 @@ e a portaria valida a entrada com câmera ou digitação manual.
 
 | Camada   | Tecnologia                               |
 | -------- | ---------------------------------------- |
-| Frontend | React 19 + Vite + TypeScript + Tailwind 4 |
-| Backend  | NestJS 11 + TypeScript + Prisma 7 + SQLite |
+| Frontend | React 19 + Vite + TypeScript + Tailwind 4 + NeoBrutalism kit |
+| Backend  | NestJS 11 + TypeScript + Prisma 7 + PostgreSQL 16 |
 | Catálogo | [TMDB](https://www.themoviedb.org/) (filmes) + catálogo de shows local |
 
 ## Estrutura
@@ -36,20 +36,38 @@ ingressa/
 
 ## Como rodar
 
-> Requisitos: Node.js 20+ e npm.
+### Opção 1 — Docker (tudo em containers)
 
 ```bash
-# 1. instalar dependências
+docker compose up --build
+# api:    http://localhost:3000
+# web:    http://localhost:5173
+# banco:  localhost:5432 (postgres 16)
+
+# popular o banco com dados de demonstração (uma vez):
+docker compose exec api npx tsx prisma/seed.ts
+```
+
+### Opção 2 — Local (Postgres nativo)
+
+> Requisitos: Node.js 20+, npm e PostgreSQL 16 rodando em `localhost:5432`.
+
+```bash
+# 1. banco (uma vez)
+sudo -u postgres psql -c "CREATE USER ingressa WITH PASSWORD 'ingressa' CREATEDB;"
+sudo -u postgres psql -c "CREATE DATABASE ingressa OWNER ingressa;"
+
+# 2. dependências
 npm run install:all
 
-# 2. configurar o backend
+# 3. configurar o backend
 cp backend/.env.example backend/.env   # ajuste TMDB_API_KEY se quiser catálogo real (opcional)
 
-# 3. banco: migrations + seed com dados de demonstração
+# 4. migrations + seed
 npm --prefix backend run migrate
 npm --prefix backend run seed
 
-# 4. subir as aplicações (terminais separados)
+# 5. subir as aplicações (terminais separados)
 npm run dev:api    # http://localhost:3000
 npm run dev:web    # http://localhost:5173 (proxy /api -> :3000)
 ```

@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-export const api = axios.create({ baseURL: '/api' });
+// local: '/api' (proxy do vite) · docker/producao: VITE_API_URL aponta direto para a api
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL ?? '/api',
+});
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('ingressa:token');
