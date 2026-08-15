@@ -87,6 +87,7 @@ export interface Reservation {
   expiresAt: string;
   createdAt: string;
   event: {
+    id: string;
     title: string;
     venue: string;
     city: string;
