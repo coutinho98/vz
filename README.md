@@ -1,23 +1,37 @@
 # Ingressa
 
-Plataforma de eventos e ingressos: organizadores publicam eventos a partir de um catálogo externo
-(filmes via TMDB + shows), clientes reservam lugares, pagam (simulado), recebem ingresso com QR Code
-e a portaria valida a entrada.
+Plataforma de eventos e ingressos: organizadores montam eventos a partir de um catálogo
+externo (filmes via TMDB + shows locais), clientes reservam lugares — assentos marcados
+ou pista —, pagam de forma simulada, recebem ingresso com QR Code compartilhável por link
+e a portaria valida a entrada com câmera ou digitação manual.
 
 ## Stack
 
-| Camada  | Tecnologia                                  |
-| ------- | ------------------------------------------- |
-| Frontend| React + Vite + TypeScript + Tailwind CSS    |
-| Backend | NestJS + TypeScript + Prisma + SQLite       |
-| Catálogo| TMDB API (filmes) + catálogo de shows local |
+| Camada   | Tecnologia                               |
+| -------- | ---------------------------------------- |
+| Frontend | React 19 + Vite + TypeScript + Tailwind 4 |
+| Backend  | NestJS 11 + TypeScript + Prisma 7 + SQLite |
+| Catálogo | [TMDB](https://www.themoviedb.org/) (filmes) + catálogo de shows local |
 
 ## Estrutura
 
 ```
 ingressa/
-├── backend/    # API NestJS (auth, catálogo, eventos, reservas, pagamentos, ingressos, portaria)
-└── frontend/   # SPA React (navegação, reserva, checkout, meus ingressos, portaria)
+├── backend/
+│   └── src/
+│       ├── auth/          # JWT, papéis (organizador/cliente), guards
+│       ├── catalog/       # TMDB com fallback offline + shows locais
+│       ├── events/        # CRUD, publicação, mapa de assentos, disponibilidade
+│       ├── reservations/  # bloqueio atômico de assentos/pista (hold de 10 min)
+│       ├── payments/      # pagamento simulado (aprovação e recusa)
+│       ├── tickets/       # emissão, código único, consulta pública p/ link
+│       └── gate/          # validação na portaria (válido/inválido/já usado/evento errado)
+└── frontend/
+    └── src/
+        ├── api/           # cliente axios + tipos do domínio
+        ├── auth/          # contexto de autenticação
+        ├── components/    # layout, cards, mapa de assentos, UI kit
+        └── pages/         # explorar, detalhe, checkout, ingressos, organizador, portaria
 ```
 
 ## Como rodar
@@ -25,22 +39,74 @@ ingressa/
 > Requisitos: Node.js 20+ e npm.
 
 ```bash
+# 1. instalar dependências
 npm run install:all
 
-# backend (http://localhost:3000)
-npm run dev:api
+# 2. configurar o backend
+cp backend/.env.example backend/.env   # ajuste TMDB_API_KEY se quiser catálogo real (opcional)
 
-# frontend (http://localhost:5173)
-npm run dev:web
+# 3. banco: migrations + seed com dados de demonstração
+npm --prefix backend run migrate
+npm --prefix backend run seed
+
+# 4. subir as aplicações (terminais separados)
+npm run dev:api    # http://localhost:3000
+npm run dev:web    # http://localhost:5173 (proxy /api -> :3000)
 ```
 
-## Funcionalidades
+### Contas de demonstração (seed)
 
-- [ ] Autenticação com papéis (organizador, cliente)
-- [ ] Catálogo externo (filmes TMDB + shows mockados)
-- [ ] Criação e gerenciamento de eventos pelo organizador
-- [ ] Navegação e busca por eventos publicados
-- [ ] Reserva com mapa de assentos (cinema/teatro) ou quantidade (pista)
-- [ ] Pagamento simulado (confirmação e recusa)
-- [ ] Meus ingressos com QR Code e compartilhamento por link
-- [ ] Portaria: leitura de QR pela câmera + digitação manual
+| Papel       | E-mail                     | Senha   |
+| ----------- | -------------------------- | ------- |
+| Organizador | organizador@ingressa.com   | 123456  |
+| Cliente     | cliente@ingressa.com       | 123456  |
+
+## Fluxos implementados
+
+### Organizador
+- Cria eventos a partir do catálogo (filmes TMDB *em cartaz*/busca ou shows locais),
+  definindo data, local, preço e formato do espaço.
+- Espaços **assentados** (cinema/teatro: fileiras × assentos, com mapa) ou **pista**
+  (capacidade total).
+- Gerencia eventos: publicar (rascunho → publicado), cancelar (libera pendências e
+  invalida ingressos), editar rascunhos.
+- Portaria própria por evento.
+
+### Cliente
+- Navega e busca eventos publicados (título, casa ou cidade), filtrando por categoria.
+- Reserva com **mapa de assentos** interativo ou **quantidade** (pista, até 10).
+  A reserva bloqueia os lugares por **10 minutos** (expiração automática no servidor).
+- **Pagamento simulado**: qualquer cartão é aprovado; números terminados em `0002`
+  são recusados e a reserva continua válida para nova tentativa.
+- **Meus ingressos** com QR Code (conteúdo = link público `/t/CODIGO`),
+  compartilhável por link, com estado (válido/utilizado/cancelado).
+
+### Portaria (organizador)
+- Validação com **retorno claro e colorido**:
+  - ✅ **Válido** — entrada liberada (marca como utilizado);
+  - ⚠️ **Já utilizado** — com data/hora do check-in;
+  - ❌ **Inválido** — código inexistente, **evento errado** (informa o evento correto)
+    ou cancelado.
+- Leitura do QR **pela câmera** (html5-qrcode, aceita o link ou o código puro) +
+  **digitação manual** como alternativa.
+
+## Decisões técnicas
+
+- **Concorrência de assentos**: reserva dentro de transação com `updateMany` condicional
+  (`reservationId IS NULL`) — dois clientes disputando o mesmo lugar recebem `409`.
+- **Expiração de reservas**: varredura preguiçosa (`expireStaleReservations`) ao ler
+  mapa/criar reserva/pagar — sem necessidade de cron.
+- **TMDB opcional**: sem `TMDB_API_KEY` a API usa catálogo local de fallback, mantendo o
+  fluxo completo funcionando offline.
+- **QR Code**: o backend emite apenas o código (`ING-XXXXX-XXXXX`); o QR é renderizado no
+  front (`qrcode.react`) apontando para o link público do ingresso — o mesmo QR funciona
+  em qualquer leitor.
+- **IDs UUID** para validação de rota via `ParseUUIDPipe`.
+
+## Scripts úteis
+
+```bash
+npm run build:api && npm run build:web   # builds de produção
+npm --prefix backend run seed            # reseta e popula o banco
+npm --prefix backend run start:prod      # API via dist
+```
