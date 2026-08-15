@@ -1,7 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { apiErrorMessage } from '../api/client';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const { login, register, user } = useAuth();
@@ -34,106 +39,97 @@ export default function LoginPage() {
     }
   }
 
-  const input =
-    'w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-amber-400';
-
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold tracking-tight">
+      <h1 className="font-head text-3xl tracking-tight">
         {mode === 'login' ? 'Entrar' : 'Criar conta'}
       </h1>
-      <p className="mt-1 text-sm text-zinc-400">
+      <p className="mt-1 text-sm text-muted-foreground">
         {mode === 'login'
           ? 'Acesse sua conta para comprar ingressos ou gerenciar eventos.'
           : 'Escolha seu perfil e comece a usar a plataforma.'}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        {mode === 'register' && (
-          <>
-            <input
-              className={input}
-              placeholder="Seu nome"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              minLength={2}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              {(['CUSTOMER', 'ORGANIZER'] as const).map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
-                    role === r
-                      ? 'border-amber-400 bg-amber-400/10 text-amber-300'
-                      : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
-                  }`}
-                >
-                  {r === 'CUSTOMER' ? 'Cliente' : 'Organizador'}
-                </button>
-              ))}
+      <Card className="mt-6">
+        <CardContent className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'register' && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Seu nome</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    minLength={2}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['CUSTOMER', 'ORGANIZER'] as const).map((r) => (
+                    <Button
+                      type="button"
+                      key={r}
+                      variant={role === r ? 'default' : 'outline'}
+                      onClick={() => setRole(r)}
+                    >
+                      {r === 'CUSTOMER' ? 'Cliente' : 'Organizador'}
+                    </Button>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          </>
-        )}
-        <input
-          className={input}
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          className={input}
-          type="password"
-          placeholder="Senha (mín. 6 caracteres)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Senha (mín. 6 caracteres)</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
 
-        {error && (
-          <p className="rounded-lg border border-red-900/60 bg-red-950/50 px-3 py-2 text-sm text-red-300">
-            {error}
+            {error && (
+              <Alert status="error">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button disabled={busy} className="w-full" size="lg">
+              {busy ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            {mode === 'login' ? 'Não tem conta? ' : 'Já tem conta? '}
+            <button
+              className="font-bold underline underline-offset-4"
+              onClick={() => {
+                setMode(mode === 'login' ? 'register' : 'login');
+                setError(null);
+              }}
+            >
+              {mode === 'login' ? 'Cadastre-se' : 'Entre'}
+            </button>
           </p>
-        )}
+        </CardContent>
+      </Card>
 
-        <button
-          disabled={busy}
-          className="w-full rounded-lg bg-amber-400 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:opacity-50"
-        >
-          {busy ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
-        </button>
-      </form>
-
-      <p className="mt-4 text-center text-sm text-zinc-500">
-        {mode === 'login' ? 'Não tem conta? ' : 'Já tem conta? '}
-        <button
-          className="font-medium text-amber-400 hover:underline"
-          onClick={() => {
-            setMode(mode === 'login' ? 'register' : 'login');
-            setError(null);
-          }}
-        >
-          {mode === 'login' ? 'Cadastre-se' : 'Entre'}
-        </button>
-      </p>
-
-      <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-xs leading-relaxed text-zinc-500">
-        <p className="font-semibold text-zinc-400">Contas de demonstração (seed):</p>
-        <p className="mt-1">
-          cliente@ingressa.com · organizador@ingressa.com — senha <code>123456</code>
-        </p>
-        <p className="mt-1">
-          Ainda sem cadastro?{' '}
-          <Link to="/entrar" className="text-amber-400">
-            use o formulário
-          </Link>
-          .
-        </p>
+      <div className="mt-6 rounded border-2 border-dashed border-black/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
+        <p className="font-bold text-foreground">CONTAS DEMO (seed):</p>
+        <p className="mt-1">cliente@ingressa.com · organizador@ingressa.com — 123456</p>
       </div>
     </div>
   );

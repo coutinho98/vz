@@ -1,15 +1,14 @@
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { Button } from '@/components/ui/button';
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400 text-sm font-black text-zinc-950">
+    <Link to="/" className="flex items-center gap-2.5">
+      <span className="flex h-9 w-9 items-center justify-center rounded border-2 border-black bg-primary font-head text-sm shadow-sm">
         IN
       </span>
-      <span className="text-lg font-bold tracking-tight">
-        ingressa<span className="text-amber-400">.</span>
-      </span>
+      <span className="font-head text-xl tracking-tight">ingressa.</span>
     </Link>
   );
 }
@@ -19,15 +18,15 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+    `rounded border-2 px-3 py-1.5 text-sm font-bold transition ${
       isActive
-        ? 'bg-zinc-800 text-zinc-100'
-        : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'
+        ? 'border-black bg-black text-background shadow-sm'
+        : 'border-transparent text-muted-foreground hover:border-black hover:bg-card hover:text-foreground'
     }`;
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/85 backdrop-blur">
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-40 border-b-2 border-black bg-background">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <Logo />
           <nav className="flex items-center gap-1">
@@ -53,36 +52,27 @@ export default function Layout() {
           {user ? (
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
-                <p className="text-sm font-medium leading-tight">{user.name}</p>
-                <p className="text-xs leading-tight text-zinc-500">
+                <p className="text-sm font-bold leading-tight">{user.name}</p>
+                <p className="font-mono text-[10px] uppercase leading-tight tracking-widest text-muted-foreground">
                   {user.role === 'ORGANIZER' ? 'Organizador' : 'Cliente'}
                 </p>
               </div>
-              <button
-                onClick={() => {
-                  logout();
-                  navigate('/');
-                }}
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
-              >
+              <Button variant="outline" size="sm" onClick={() => { logout(); navigate('/'); }}>
                 Sair
-              </button>
+              </Button>
             </div>
           ) : (
-            <Link
-              to="/entrar"
-              className="rounded-lg bg-amber-400 px-4 py-1.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300"
-            >
+            <Button size="sm" render={<Link to="/entrar" />}>
               Entrar
-            </Link>
+            </Button>
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <Outlet />
       </main>
-      <footer className="border-t border-zinc-800/80 py-6 text-center text-xs text-zinc-600">
-        Ingressa — plataforma de eventos e ingressos · teste técnico
+      <footer className="border-t-2 border-black bg-black py-5 text-center font-mono text-[11px] uppercase tracking-[0.25em] text-background/70">
+        ingressa · plataforma de eventos e ingressos · teste técnico
       </footer>
     </div>
   );

@@ -1,3 +1,19 @@
+import { Badge as KitBadge } from '@/components/ui/badge';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+
+const PLACEHOLDER_BG = ['bg-primary', 'bg-accent', 'bg-muted', 'bg-[#c5d5ff]'];
+
+function posterSeed(alt: string) {
+  let hash = 0;
+  for (const ch of alt) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  return Math.abs(hash);
+}
+
 export function Poster({
   src,
   alt,
@@ -13,55 +29,87 @@ export function Poster({
         src={src}
         alt={alt}
         loading="lazy"
-        className={`h-full w-full object-cover ${className}`}
+        className={cn('h-full w-full object-cover', className)}
       />
     );
   }
   const initial = alt.trim().charAt(0).toUpperCase() || '?';
+  const bg = PLACEHOLDER_BG[posterSeed(alt) % PLACEHOLDER_BG.length];
   return (
-    <div
-      className={`flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 via-zinc-900 to-zinc-950 ${className}`}
-    >
-      <span className="text-4xl font-black text-zinc-700">{initial}</span>
+    <div className={cn('flex h-full w-full items-center justify-center border-2 border-black', bg, className)}>
+      <span className="font-head text-5xl">{initial}</span>
     </div>
   );
 }
 
 export function Spinner({ label = 'Carregando…' }: { label?: string }) {
   return (
-    <div className="flex flex-col items-center gap-3 py-20 text-zinc-500">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-amber-400" />
-      <p className="text-sm">{label}</p>
+    <div className="flex flex-col items-center gap-3 py-20 text-muted-foreground">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-black border-t-transparent" />
+      <p className="font-mono text-xs uppercase tracking-widest">{label}</p>
     </div>
   );
 }
 
+export type BadgeTone =
+  | 'default'
+  | 'secondary'
+  | 'outline'
+  | 'destructive'
+  // tons semânticos remapeados para o kit
+  | 'success'
+  | 'warning'
+  // aliases legados
+  | 'zinc'
+  | 'amber'
+  | 'green'
+  | 'red';
+
+const TONE_CLASS: Record<BadgeTone, string> = {
+  default: '',
+  secondary: '',
+  outline: '',
+  destructive: '',
+  success: 'border-green-900 bg-green-300 text-green-900',
+  warning: 'border-yellow-900 bg-yellow-300 text-yellow-900',
+  zinc: 'bg-muted text-foreground',
+  amber: 'bg-primary text-primary-foreground',
+  green: 'border-green-900 bg-green-300 text-green-900',
+  red: 'border-red-900 bg-red-300 text-red-900',
+};
+
+const TONE_VARIANT: Partial<Record<BadgeTone, 'default' | 'secondary' | 'outline' | 'destructive'>> = {
+  default: 'default',
+  secondary: 'secondary',
+  outline: 'outline',
+  destructive: 'destructive',
+  zinc: 'outline',
+  amber: 'default',
+  green: 'outline',
+  red: 'destructive',
+  success: 'outline',
+  warning: 'outline',
+};
+
 export function Badge({
   children,
-  tone = 'zinc',
+  tone = 'default',
 }: {
   children: React.ReactNode;
-  tone?: 'zinc' | 'amber' | 'green' | 'red';
+  tone?: BadgeTone;
 }) {
-  const tones = {
-    zinc: 'border-zinc-700 bg-zinc-800/60 text-zinc-300',
-    amber: 'border-amber-500/40 bg-amber-400/10 text-amber-300',
-    green: 'border-emerald-500/40 bg-emerald-400/10 text-emerald-300',
-    red: 'border-red-500/40 bg-red-400/10 text-red-300',
-  };
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${tones[tone]}`}
-    >
-      {children}
-    </span>
-  );
+  const variant =
+    tone === 'success' || tone === 'warning'
+      ? 'outline'
+      : (TONE_VARIANT[tone] ?? 'outline');
+  return <KitBadge variant={variant} className={TONE_CLASS[tone]}>{children}</KitBadge>;
 }
 
 export function ErrorBox({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
-      {message}
-    </div>
+    <Alert status="error">
+      <AlertTitle>Ops</AlertTitle>
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   );
 }
