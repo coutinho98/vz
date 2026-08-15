@@ -10,7 +10,33 @@ import { ReservationsService } from '../reservations/reservations.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { PayReservationDto } from './dto/pay-reservation.dto';
 
-const DECLINE_SUFFIX = '0002';
+/**
+ * Cartões de teste oficiais da Stripe (ambiente sandbox).
+ * Qualquer outro número válido é aprovado — ex.: 4242 4242 4242 4242.
+ * https://docs.stripe.com/testing
+ */
+const STRIPE_TEST_DECLINES: Record<string, { code: string; message: string }> = {
+  '4000000000000002': {
+    code: 'card_declined',
+    message: 'Cartão recusado pela operadora (card_declined).',
+  },
+  '4000000000009995': {
+    code: 'insufficient_funds',
+    message: 'Saldo insuficiente no cartão (insufficient_funds).',
+  },
+  '4000000000009987': {
+    code: 'lost_card',
+    message: 'Cartão reportado como perdido (lost_card).',
+  },
+  '4000000000000069': {
+    code: 'expired_card',
+    message: 'Cartão expirado (expired_card).',
+  },
+  '4000000000000127': {
+    code: 'incorrect_cvc',
+    message: 'Código de segurança incorreto (incorrect_cvc).',
+  },
+};
 
 @Injectable()
 export class PaymentsService {
@@ -38,11 +64,11 @@ export class PaymentsService {
       throw new BadRequestException('Reserva já foi paga');
     }
 
-    const declined = dto.cardNumber.endsWith(DECLINE_SUFFIX);
+    const decline = STRIPE_TEST_DECLINES[dto.cardNumber];
     const brand = this.detectBrand(dto.cardNumber);
     const last4 = dto.cardNumber.slice(-4);
 
-    if (declined) {
+    if (decline) {
       const payment = await this.prisma.payment.create({
         data: {
           reservationId: reservation.id,
@@ -52,7 +78,13 @@ export class PaymentsService {
           amountCents: reservation.totalCents,
         },
       });
-      return { outcome: 'DECLINED', payment, tickets: [] };
+      return {
+        outcome: 'DECLINED',
+        declineCode: decline.code,
+        declineMessage: decline.message,
+        payment,
+        tickets: [],
+      };
     }
 
     const payment = await this.prisma.$transaction(async (tx) => {
