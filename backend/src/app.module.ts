@@ -6,6 +6,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { CatalogModule } from './catalog/catalog.module';
 import { EventsModule } from './events/events.module';
+import { GateModule } from './gate/gate.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReservationsModule } from './reservations/reservations.module';
@@ -21,6 +22,7 @@ import { TicketsModule } from './tickets/tickets.module';
     ReservationsModule,
     TicketsModule,
     PaymentsModule,
+    GateModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
