@@ -117,10 +117,26 @@ export class ReservationsService {
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
       include: {
-        event: { select: { title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
+        event: { select: { id: true, title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
         seats: { orderBy: [{ row: 'asc' }, { number: 'asc' }] },
       },
     });
+  }
+
+  async getById(user: AuthUser, id: string) {
+    await this.expireStale();
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id },
+      include: {
+        event: { select: { id: true, title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
+        seats: { orderBy: [{ row: 'asc' }, { number: 'asc' }] },
+      },
+    });
+    if (!reservation) throw new NotFoundException('Reserva não encontrada');
+    if (reservation.userId !== user.id) {
+      throw new ForbiddenException('Esta reserva não pertence a você');
+    }
+    return reservation;
   }
 
   async cancel(user: AuthUser, reservationId: string) {

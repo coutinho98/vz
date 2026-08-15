@@ -23,6 +23,14 @@ export class ReservationsController {
     return this.reservationsService.mine(user);
   }
 
+  @Get(':id')
+  getById(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.reservationsService.getById(user, id);
+  }
+
   @Post('events/:eventId')
   create(
     @CurrentUser() user: AuthUser,
