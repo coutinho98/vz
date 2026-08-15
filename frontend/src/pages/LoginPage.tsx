@@ -107,7 +107,7 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            <Button disabled={busy} className="w-full" size="lg">
+            <Button type="submit" disabled={busy} className="w-full" size="lg">
               {busy ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
             </Button>
           </form>

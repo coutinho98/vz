@@ -168,7 +168,7 @@ export default function GateCheckPage() {
               placeholder="ING-XXXXX-XXXXX"
               className="flex-1 font-mono uppercase tracking-wider"
             />
-            <Button disabled={checkIn.isPending || !manualCode.trim()}>Validar</Button>
+            <Button type="submit" disabled={checkIn.isPending || !manualCode.trim()}>Validar</Button>
           </form>
         </CardContent>
       </Card>

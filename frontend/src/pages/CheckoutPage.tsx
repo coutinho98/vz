@@ -198,7 +198,7 @@ export default function CheckoutPage() {
                 </Alert>
               )}
 
-              <Button disabled={pay.isPending} className="w-full" size="lg">
+              <Button type="submit" disabled={pay.isPending} className="w-full" size="lg">
                 {pay.isPending
                   ? 'Processando…'
                   : `Pagar ${formatBRL(reservation.totalCents)}`}

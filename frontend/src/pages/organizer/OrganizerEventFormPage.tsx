@@ -365,7 +365,7 @@ export default function OrganizerEventFormPage() {
               <Button variant="ghost" type="button" nativeButton={false} render={<Link to="/organizador" />}>
                 Cancelar
               </Button>
-              <Button disabled={create.isPending}>
+              <Button type="submit" disabled={create.isPending}>
                 {create.isPending
                   ? 'Salvando…'
                   : editing
