@@ -1,0 +1,14 @@
+{
+  "name": "ingressa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma de eventos e ingressos — organizadores publicam eventos, clientes compram ingressos com QR Code e a portaria valida a entrada.",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "dev:api": "npm --prefix backend run start:dev",
+    "dev:web": "npm --prefix frontend run dev",
+    "build:api": "npm --prefix backend run build",
+    "build:web": "npm --prefix frontend run build",
+    "test:api": "npm --prefix backend test"
+  }
+}
