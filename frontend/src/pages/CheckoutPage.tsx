@@ -77,7 +77,7 @@ export default function CheckoutPage() {
           </AlertDescription>
         </Alert>
         <div className="mt-4 text-center">
-          <Button render={<Link to={`/eventos/${reservation.event.id}`} />}>
+          <Button nativeButton={false} render={<Link to={`/eventos/${reservation.event.id}`} />}>
             Ver evento novamente
           </Button>
         </div>
@@ -95,7 +95,7 @@ export default function CheckoutPage() {
           </AlertDescription>
         </Alert>
         <div className="mt-4 text-center">
-          <Button render={<Link to="/ingressos" />}>Ver meus ingressos</Button>
+          <Button nativeButton={false} render={<Link to="/ingressos" />}>Ver meus ingressos</Button>
         </div>
       </div>
     );

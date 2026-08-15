@@ -79,7 +79,7 @@ export default function EventDetailPage() {
     return (
       <div className="space-y-4">
         <ErrorBox message="Evento não encontrado." />
-        <Button variant="outline" size="sm" render={<Link to="/" />}>
+        <Button variant="outline" size="sm" nativeButton={false} render={<Link to="/" />}>
           ← Voltar para explorar
         </Button>
       </div>

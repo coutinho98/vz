@@ -362,7 +362,7 @@ export default function OrganizerEventFormPage() {
             {error && <ErrorBox message={error} />}
 
             <div className="flex items-center justify-between border-t-2 border-dashed border-black/30 pt-4">
-              <Button variant="ghost" type="button" render={<Link to="/organizador" />}>
+              <Button variant="ghost" type="button" nativeButton={false} render={<Link to="/organizador" />}>
                 Cancelar
               </Button>
               <Button disabled={create.isPending}>

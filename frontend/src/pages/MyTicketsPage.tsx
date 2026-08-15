@@ -58,7 +58,7 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
             )}
           </p>
           <div className="flex flex-wrap gap-2 pt-1.5">
-            <Button variant="outline" size="xs" render={<Link to={`/t/${ticket.code}`} />}>
+            <Button variant="outline" size="xs" nativeButton={false} render={<Link to={`/t/${ticket.code}`} />}>
               Abrir ingresso
             </Button>
             <Button
@@ -118,7 +118,7 @@ export default function MyTicketsPage() {
       ) : (
         <div className="rounded border-2 border-dashed border-black/40 py-16 text-center">
           <p className="text-muted-foreground">Você ainda não tem ingressos.</p>
-          <Button variant="outline" size="sm" className="mt-3" render={<Link to="/" />}>
+          <Button variant="outline" size="sm" className="mt-3" nativeButton={false} render={<Link to="/" />}>
             Explorar eventos →
           </Button>
         </div>

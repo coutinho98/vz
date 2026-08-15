@@ -62,7 +62,7 @@ export default function Layout() {
               </Button>
             </div>
           ) : (
-            <Button size="sm" render={<Link to="/entrar" />}>
+            <Button size="sm" nativeButton={false} render={<Link to="/entrar" />}>
               Entrar
             </Button>
           )}

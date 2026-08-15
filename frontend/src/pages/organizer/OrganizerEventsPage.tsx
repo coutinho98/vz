@@ -43,7 +43,7 @@ export default function OrganizerEventsPage() {
             Publique, cancele e acompanhe os eventos que você organiza.
           </p>
         </div>
-        <Button render={<Link to="/organizador/novo" />}>+ Criar evento</Button>
+        <Button nativeButton={false} render={<Link to="/organizador/novo" />}>+ Criar evento</Button>
       </div>
 
       {isPending && <Spinner label="Carregando eventos…" />}
@@ -100,7 +100,7 @@ export default function OrganizerEventsPage() {
                           <Button
                             variant="outline"
                             size="xs"
-                            render={<Link to={`/organizador/${event.id}/editar`} />}
+                            nativeButton={false} render={<Link to={`/organizador/${event.id}/editar`} />}
                           >
                             Editar
                           </Button>
@@ -111,7 +111,7 @@ export default function OrganizerEventsPage() {
                           <Button
                             variant="outline"
                             size="xs"
-                            render={<Link to={`/portaria/${event.id}`} />}
+                            nativeButton={false} render={<Link to={`/portaria/${event.id}`} />}
                           >
                             Portaria
                           </Button>
