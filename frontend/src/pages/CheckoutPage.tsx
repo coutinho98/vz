@@ -4,6 +4,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { PayResponse, Reservation } from '../api/types';
 import { api, apiErrorMessage, formatBRL, formatDateTime } from '../api/client';
 import { Badge, ErrorBox, Spinner } from '../components/ui';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function CheckoutPage() {
   const { reservationId } = useParams<{ reservationId: string }>();
@@ -50,15 +55,12 @@ export default function CheckoutPage() {
     pay.mutate();
   }
 
-  const input =
-    'w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none transition placeholder:text-zinc-500 focus:border-amber-400';
-
   if (isPending) return <Spinner label="Carregando reserva…" />;
   if (isError || !reservation)
     return (
-      <div className="space-y-4">
-        <ErrorBox message="Reserva não encontrada. Veja suas reservas em Meus ingressos." />
-        <Link to="/ingressos" className="text-sm text-amber-400 hover:underline">
+      <div className="mx-auto max-w-lg space-y-4">
+        <ErrorBox message="Reserva não encontrada. Veja seus ingressos." />
+        <Link to="/ingressos" className="block text-center text-sm font-bold underline underline-offset-4">
           Ir para meus ingressos
         </Link>
       </div>
@@ -66,33 +68,35 @@ export default function CheckoutPage() {
 
   if (reservation.status === 'CANCELLED') {
     return (
-      <div className="mx-auto max-w-lg space-y-4 text-center">
-        <h1 className="text-2xl font-bold">Reserva expirada</h1>
-        <p className="text-zinc-400">
-          O tempo de bloqueio dos lugares terminou. Os lugares foram liberados — você
-          pode iniciar uma nova reserva.
-        </p>
-        <Link
-          to={`/eventos/${reservation.event.id}`}
-          className="inline-block rounded-lg bg-amber-400 px-6 py-2.5 font-semibold text-zinc-950"
-        >
-          Ver evento
-        </Link>
+      <div className="mx-auto max-w-lg">
+        <Alert status="warning">
+          <AlertTitle>Reserva expirada</AlertTitle>
+          <AlertDescription>
+            O tempo de bloqueio dos lugares terminou e eles foram liberados — você pode
+            iniciar uma nova reserva.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 text-center">
+          <Button render={<Link to={`/eventos/${reservation.event.id}`} />}>
+            Ver evento novamente
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (reservation.status === 'CONFIRMED') {
     return (
-      <div className="mx-auto max-w-lg space-y-4 text-center">
-        <h1 className="text-2xl font-bold text-emerald-400">Pagamento confirmado</h1>
-        <p className="text-zinc-400">Esta reserva já foi paga. Seus ingressos estão prontos.</p>
-        <Link
-          to="/ingressos"
-          className="inline-block rounded-lg bg-amber-400 px-6 py-2.5 font-semibold text-zinc-950"
-        >
-          Ver meus ingressos
-        </Link>
+      <div className="mx-auto max-w-lg">
+        <Alert status="success">
+          <AlertTitle>Pagamento confirmado</AlertTitle>
+          <AlertDescription>
+            Esta reserva já foi paga. Seus ingressos estão prontos.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 text-center">
+          <Button render={<Link to="/ingressos" />}>Ver meus ingressos</Button>
+        </div>
       </div>
     );
   }
@@ -109,87 +113,102 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Pagamento</h1>
-        <Badge tone={minutesLeft <= 2 ? 'red' : 'amber'}>
-          Expira em {minutesLeft} min
+        <h1 className="font-head text-2xl tracking-tight">Pagamento</h1>
+        <Badge tone={minutesLeft <= 2 ? 'red' : 'warning'}>
+          ⏱ expira em {minutesLeft} min
         </Badge>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <section className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Resumo
-          </h2>
-          <p className="font-semibold">{reservation.event.title}</p>
-          <p className="text-sm text-zinc-400">
-            {formatDateTime(reservation.event.startsAt)}
-          </p>
-          <p className="text-sm text-zinc-400">
-            {reservation.event.venue} — {reservation.event.city}
-          </p>
-          <p className="text-sm text-zinc-300">{seatsLabel}</p>
-          <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
-            <span className="text-sm text-zinc-400">Total</span>
-            <span className="text-xl font-bold text-amber-400">
-              {formatBRL(reservation.totalCents)}
-            </span>
-          </div>
-        </section>
-
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Cartão (simulado)
-          </h2>
-          <input
-            className={input}
-            placeholder="Nome impresso no cartão"
-            value={cardHolder}
-            onChange={(e) => setCardHolder(e.target.value)}
-            required
-          />
-          <input
-            className={input}
-            placeholder="Número — use 0002 no fim p/ recusar"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 19))}
-            required
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              className={input}
-              placeholder="MM/AA"
-              value={expiry}
-              onChange={(e) => setExpiry(e.target.value)}
-              required
-            />
-            <input
-              className={input}
-              placeholder="CVV"
-              value={cvv}
-              onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              required
-            />
-          </div>
-
-          {error && <ErrorBox message={error} />}
-          {declined && (
-            <div className="rounded-lg border border-red-900/60 bg-red-950/50 px-3 py-2.5 text-sm text-red-300">
-              <strong>Pagamento recusado.</strong> Tente outro cartão — a reserva
-              continua válida até a expiração.
+        <Card>
+          <CardHeader>
+            <CardTitle>Resumo</CardTitle>
+            <CardDescription>{reservation.event.title}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="text-muted-foreground">{formatDateTime(reservation.event.startsAt)}</p>
+            <p className="text-muted-foreground">
+              {reservation.event.venue} — {reservation.event.city}
+            </p>
+            <p className="rounded border-2 border-black bg-muted px-2 py-1 font-mono text-xs uppercase tracking-wide">
+              {seatsLabel}
+            </p>
+            <div className="flex items-center justify-between border-t-2 border-dashed border-black/30 pt-3">
+              <span className="text-muted-foreground">Total</span>
+              <span className="rounded border-2 border-black bg-primary px-2 py-0.5 font-head text-lg">
+                {formatBRL(reservation.totalCents)}
+              </span>
             </div>
-          )}
+          </CardContent>
+        </Card>
 
-          <button
-            disabled={pay.isPending}
-            className="w-full rounded-lg bg-amber-400 py-2.5 font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:opacity-50"
-          >
-            {pay.isPending ? 'Processando…' : `Pagar ${formatBRL(reservation.totalCents)}`}
-          </button>
-          <p className="text-center text-xs text-zinc-500">
-            Ambiente de teste: qualquer cartão é aprovado, exceto números terminados
-            em 0002.
-          </p>
-        </form>
+        <Card>
+          <CardContent className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <h2 className="font-head text-sm uppercase tracking-widest text-muted-foreground">
+                Cartão (simulado)
+              </h2>
+              <div className="space-y-1.5">
+                <Label htmlFor="holder">Nome impresso no cartão</Label>
+                <Input
+                  id="holder"
+                  value={cardHolder}
+                  onChange={(e) => setCardHolder(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="number">Número — use 0002 no fim p/ recusar</Label>
+                <Input
+                  id="number"
+                  className="font-mono"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 19))}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="expiry">Validade (MM/AA)</Label>
+                  <Input
+                    id="expiry"
+                    value={expiry}
+                    onChange={(e) => setExpiry(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cvv">CVV</Label>
+                  <Input
+                    id="cvv"
+                    value={cvv}
+                    onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    required
+                  />
+                </div>
+              </div>
+
+              {error && <ErrorBox message={error} />}
+              {declined && (
+                <Alert status="error">
+                  <AlertTitle>Pagamento recusado</AlertTitle>
+                  <AlertDescription>
+                    Tente outro cartão — a reserva continua válida até a expiração.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Button disabled={pay.isPending} className="w-full" size="lg">
+                {pay.isPending
+                  ? 'Processando…'
+                  : `Pagar ${formatBRL(reservation.totalCents)}`}
+              </Button>
+              <p className="text-center font-mono text-xs text-muted-foreground">
+                teste: qualquer cartão aprova, exceto terminado em 0002
+              </p>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

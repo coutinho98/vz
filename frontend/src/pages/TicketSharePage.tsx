@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import type { PublicTicket } from '../api/types';
 import { api, formatDateTime } from '../api/client';
 import { Badge, ErrorBox, Poster, Spinner } from '../components/ui';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function TicketSharePage() {
   const { code } = useParams<{ code: string }>();
@@ -18,17 +20,17 @@ export default function TicketSharePage() {
   return (
     <div className="mx-auto max-w-md space-y-6">
       <div className="text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
-          Ingressa
+        <p className="font-mono text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
+          ingressa apresenta
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">Seu ingresso</h1>
+        <h1 className="mt-1 font-head text-2xl tracking-tight">Seu ingresso</h1>
       </div>
 
       {isPending && <Spinner label="Buscando ingresso…" />}
       {isError && (
         <div className="space-y-4">
           <ErrorBox message="Ingresso não encontrado. Verifique o link." />
-          <Link to="/" className="block text-center text-sm text-amber-400 hover:underline">
+          <Link to="/" className="block text-center text-sm font-bold underline underline-offset-4">
             Ir para a plataforma
           </Link>
         </div>
@@ -36,61 +38,59 @@ export default function TicketSharePage() {
 
       {ticket && (
         <>
-          <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50">
+          <Card className="overflow-hidden p-0">
             <div className="relative h-44">
-              <Poster src={ticket.event.posterUrl} alt={ticket.event.title} />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30" />
-              <div className="absolute bottom-4 left-5 right-5">
-                <Badge tone={ticket.event.category === 'SHOW' ? 'amber' : 'zinc'}>
+              <Poster src={ticket.event.posterUrl} alt={ticket.event.title} className="border-0" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div className="absolute bottom-3 left-4 right-4">
+                <Badge tone={ticket.event.category === 'SHOW' ? 'default' : 'secondary'}>
                   {ticket.event.category === 'SHOW' ? 'Show' : 'Filme'}
                 </Badge>
-                <h2 className="mt-1.5 text-xl font-bold leading-tight">
+                <h2 className="mt-1.5 font-head text-xl leading-tight text-white">
                   {ticket.event.title}
                 </h2>
               </div>
             </div>
 
-            <div className="space-y-3 border-b border-dashed border-zinc-700 p-5 text-sm">
+            <div className="grid gap-2 border-b-2 border-dashed border-black p-4 text-sm">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Quando</span>
-                <span className="font-medium">{formatDateTime(ticket.event.startsAt)}</span>
+                <span className="text-muted-foreground">Quando</span>
+                <span className="font-bold">{formatDateTime(ticket.event.startsAt)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Onde</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground">Onde</span>
+                <span className="font-bold">
                   {ticket.event.venue} — {ticket.event.city}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Titular</span>
-                <span className="font-medium">{ticket.holderFirstName}</span>
+                <span className="text-muted-foreground">Titular</span>
+                <span className="font-bold">{ticket.holderFirstName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">
-                  {ticket.seatLabel ? 'Lugar' : 'Pista'}
-                </span>
-                <span className="font-semibold text-amber-400">
+                <span className="text-muted-foreground">{ticket.seatLabel ? 'Lugar' : 'Pista'}</span>
+                <span className="rounded border-2 border-black bg-primary px-1.5 font-head">
                   {ticket.seatLabel ?? `${ticket.quantity} pessoa(s)`}
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-3 p-6">
+            <CardContent className="flex flex-col items-center gap-3">
               <div
-                className={`rounded-2xl p-3 ${
-                  ticket.status === 'VALID' ? 'bg-white' : 'bg-zinc-700 opacity-60'
+                className={`rounded border-2 border-black bg-white p-3 ${
+                  ticket.status === 'VALID' ? '' : 'opacity-50 grayscale'
                 }`}
               >
                 <QRCodeSVG value={shareUrl} size={168} level="M" />
               </div>
-              <code className="text-sm tracking-[0.15em] text-zinc-300">{ticket.code}</code>
+              <code className="font-mono text-sm font-bold tracking-[0.15em]">{ticket.code}</code>
               <Badge
                 tone={
                   ticket.status === 'VALID'
-                    ? 'green'
+                    ? 'success'
                     : ticket.status === 'USED'
-                      ? 'zinc'
-                      : 'red'
+                      ? 'secondary'
+                      : 'destructive'
                 }
               >
                 {ticket.status === 'VALID'
@@ -99,11 +99,12 @@ export default function TicketSharePage() {
                     ? `Utilizado${ticket.checkedInAt ? ' em ' + formatDateTime(ticket.checkedInAt) : ''}`
                     : 'Cancelado'}
               </Badge>
-            </div>
-          </article>
+            </CardContent>
+          </Card>
 
           <div className="text-center">
-            <button
+            <Button
+              size="lg"
               onClick={() => {
                 if (navigator.share) {
                   void navigator.share({ title: 'Meu ingresso', url: shareUrl });
@@ -111,10 +112,9 @@ export default function TicketSharePage() {
                   void navigator.clipboard?.writeText(shareUrl);
                 }
               }}
-              className="rounded-xl bg-amber-400 px-6 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300"
             >
               Compartilhar ingresso
-            </button>
+            </Button>
           </div>
         </>
       )}
