@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { EventsService } from '../events/events.service';
@@ -24,8 +29,24 @@ export class GateService {
     private eventsService: EventsService,
   ) {}
 
+  /**
+   * Portaria (GATE) valida qualquer evento publicado;
+   * organizador valida apenas os próprios eventos.
+   */
+  async listEvents(user: AuthUser) {
+    if (user.role === 'GATE') {
+      return this.prisma.event.findMany({
+        where: { status: 'PUBLISHED' },
+        orderBy: { startsAt: 'asc' },
+        include: { _count: { select: { tickets: true } } },
+      });
+    }
+    const mine = await this.eventsService.listMine(user);
+    return mine.filter((event) => event.status === 'PUBLISHED');
+  }
+
   async checkIn(user: AuthUser, eventId: string, rawCode: string): Promise<CheckInResult> {
-    await this.eventsService.getOwnedEvent(user, eventId);
+    await this.assertGateAccess(user, eventId);
 
     const code = normalizeTicketCode(rawCode);
     const ticket = await this.prisma.ticket.findUnique({
@@ -80,6 +101,23 @@ export class GateService {
       message: `Entrada liberada — ${updated.seatLabel ?? `${updated.quantity} pessoa(s)`}.`,
       ticket: this.toTicketDto(updated),
     };
+  }
+
+  private async assertGateAccess(user: AuthUser, eventId: string) {
+    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) throw new NotFoundException('Evento não encontrado');
+
+    if (user.role === 'GATE') {
+      if (event.status !== 'PUBLISHED') {
+        throw new BadRequestException('Evento não está publicado');
+      }
+      return event;
+    }
+
+    if (event.organizerId !== user.id) {
+      throw new ForbiddenException('Este evento não pertence a você');
+    }
+    return event;
   }
 
   private toTicketDto(ticket: {

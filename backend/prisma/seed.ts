@@ -23,7 +23,7 @@ async function main() {
   await prisma.event.deleteMany();
   await prisma.user.deleteMany();
 
-  const [organizer, customer] = await Promise.all([
+  const [organizer, customer, gate] = await Promise.all([
     prisma.user.create({
       data: {
         name: 'Maria Organizadora',
@@ -40,7 +40,16 @@ async function main() {
         role: 'CUSTOMER',
       },
     }),
+    prisma.user.create({
+      data: {
+        name: 'Pablo Portaria',
+        email: 'portaria@ingressa.com',
+        passwordHash: await bcrypt.hash('123456', 10),
+        role: 'GATE',
+      },
+    }),
   ]);
+  void gate;
 
   const seats = (rows: number, perRow: number) => {
     const data: { row: string; number: number }[] = [];
@@ -202,9 +211,10 @@ async function main() {
     })),
   });
 
-  console.log('Seed concluído: 2 usuários, 6 eventos, 1 ingresso demo');
-  console.log('  organizador@ingressa.com / 123456');
-  console.log('  cliente@ingressa.com   / 123456');
+  console.log('Seed concluído: 3 usuários, 6 eventos, 1 ingresso demo');
+  console.log('  organizador@ingressa.com / 123456 (ORGANIZER)');
+  console.log('  cliente@ingressa.com   / 123456 (CUSTOMER)');
+  console.log('  portaria@ingressa.com  / 123456 (GATE)');
 }
 
 main()

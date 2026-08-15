@@ -12,6 +12,6 @@ export class RegisterDto {
   @MinLength(6)
   password: string;
 
-  @IsIn(['ORGANIZER', 'CUSTOMER'])
-  role: 'ORGANIZER' | 'CUSTOMER';
+  @IsIn(['ORGANIZER', 'CUSTOMER', 'GATE'])
+  role: 'ORGANIZER' | 'CUSTOMER' | 'GATE';
 }

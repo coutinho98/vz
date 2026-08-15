@@ -4,7 +4,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role: 'ORGANIZER' | 'CUSTOMER';
+  role: 'ORGANIZER' | 'CUSTOMER' | 'GATE';
 }
 
 export const CurrentUser = createParamDecorator(
