@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,110 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         String // ORGANIZER | CUSTOMER
+  createdAt    DateTime      @default(now())
+  events       Event[]
+  reservations Reservation[]
+  tickets      Ticket[]
+}
+
+model Event {
+  id           String        @id @default(cuid())
+  organizerId  String
+  organizer    User          @relation(fields: [organizerId], references: [id])
+  title        String
+  description  String
+  posterUrl    String?
+  category     String // MOVIE | SHOW
+  catalogRef   String?
+  venue        String
+  city         String
+  startsAt     DateTime
+  seatingMode  String // SEATED | STANDING
+  rowsCount    Int?
+  seatsPerRow  Int?
+  capacity     Int?
+  priceCents   Int
+  status       String        @default("DRAFT") // DRAFT | PUBLISHED | CANCELLED
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  seats        Seat[]
+  reservations Reservation[]
+  tickets      Ticket[]
+
+  @@index([status, startsAt])
+  @@index([organizerId])
+}
+
+model Seat {
+  id            String       @id @default(cuid())
+  eventId       String
+  event         Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  row           String
+  number        Int
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  ticket        Ticket?
+
+  @@unique([eventId, row, number])
+  @@index([reservationId])
+}
+
+model Reservation {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  eventId    String
+  event      Event     @relation(fields: [eventId], references: [id])
+  status     String    @default("PENDING") // PENDING | CONFIRMED | CANCELLED
+  quantity   Int       @default(0) // ingressos pista (STANDING)
+  totalCents Int
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  seats      Seat[]
+  payments   Payment[]
+  tickets    Ticket[]
+
+  @@index([userId])
+  @@index([eventId, status])
+}
+
+model Payment {
+  id            String      @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  status        String // APPROVED | DECLINED
+  cardBrand     String
+  cardLast4     String
+  amountCents   Int
+  createdAt     DateTime    @default(now())
+
+  @@index([reservationId])
+}
+
+model Ticket {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  reservationId String
+  reservation   Reservation  @relation(fields: [reservationId], references: [id])
+  eventId       String
+  event         Event        @relation(fields: [eventId], references: [id])
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  seatId        String?      @unique
+  seat          Seat?        @relation(fields: [seatId], references: [id])
+  seatLabel     String?
+  quantity      Int          @default(1)
+  status        String       @default("VALID") // VALID | USED | CANCELLED
+  checkedInAt   DateTime?
+  createdAt     DateTime     @default(now())
+
+  @@index([eventId, status])
 }
