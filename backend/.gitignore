@@ -1,0 +1,13 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+/src/generated/prisma
+
+# prisma CLI agent skills spam
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
