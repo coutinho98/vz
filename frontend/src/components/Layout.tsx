@@ -48,13 +48,22 @@ export default function Layout() {
                 </NavLink>
               </>
             )}
+            {user?.role === 'GATE' && (
+              <NavLink to="/portaria" className={linkClass}>
+                Portaria
+              </NavLink>
+            )}
           </nav>
           {user ? (
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-bold leading-tight">{user.name}</p>
                 <p className="font-mono text-[10px] uppercase leading-tight tracking-widest text-muted-foreground">
-                  {user.role === 'ORGANIZER' ? 'Organizador' : 'Cliente'}
+                  {user.role === 'ORGANIZER'
+                    ? 'Organizador'
+                    : user.role === 'GATE'
+                      ? 'Portaria'
+                      : 'Cliente'}
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => { logout(); navigate('/'); }}>

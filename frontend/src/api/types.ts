@@ -1,4 +1,4 @@
-export type Role = 'ORGANIZER' | 'CUSTOMER';
+export type Role = 'ORGANIZER' | 'CUSTOMER' | 'GATE';
 
 export interface AuthUser {
   id: string;
@@ -136,6 +136,8 @@ export interface PublicTicket {
 
 export interface PayResponse {
   outcome: 'APPROVED' | 'DECLINED';
+  declineCode?: string;
+  declineMessage?: string;
   payment: Payment;
   tickets: Ticket[];
 }

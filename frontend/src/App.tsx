@@ -24,15 +24,18 @@ export default function App() {
         <Route path="/eventos/:id" element={<EventDetailPage />} />
         <Route path="/t/:code" element={<TicketSharePage />} />
 
-        <Route element={<RequireRole role="CUSTOMER" />}>
+        <Route element={<RequireRole roles={['CUSTOMER']} />}>
           <Route path="/checkout/:reservationId" element={<CheckoutPage />} />
           <Route path="/ingressos" element={<MyTicketsPage />} />
         </Route>
 
-        <Route element={<RequireRole role="ORGANIZER" />}>
+        <Route element={<RequireRole roles={['ORGANIZER']} />}>
           <Route path="/organizador" element={<OrganizerEventsPage />} />
           <Route path="/organizador/novo" element={<OrganizerEventFormPage />} />
           <Route path="/organizador/:id/editar" element={<OrganizerEventFormPage />} />
+        </Route>
+
+        <Route element={<RequireRole roles={['ORGANIZER', 'GATE']} />}>
           <Route path="/portaria" element={<GateEventsPage />} />
           <Route
             path="/portaria/:eventId"

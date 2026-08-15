@@ -13,7 +13,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [role, setRole] = useState<'CUSTOMER' | 'ORGANIZER'>('CUSTOMER');
+  const [role, setRole] = useState<'CUSTOMER' | 'ORGANIZER' | 'GATE'>('CUSTOMER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +22,11 @@ export default function LoginPage() {
 
   const from =
     (location.state as { from?: string } | null)?.from ??
-    (user?.role === 'ORGANIZER' ? '/organizador' : '/');
+    (user?.role === 'ORGANIZER'
+      ? '/organizador'
+      : user?.role === 'GATE'
+        ? '/portaria'
+        : '/');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -65,15 +69,21 @@ export default function LoginPage() {
                     minLength={2}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['CUSTOMER', 'ORGANIZER'] as const).map((r) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      { value: 'CUSTOMER', label: 'Cliente' },
+                      { value: 'ORGANIZER', label: 'Organizador' },
+                      { value: 'GATE', label: 'Portaria' },
+                    ] as const
+                  ).map((r) => (
                     <Button
                       type="button"
-                      key={r}
-                      variant={role === r ? 'default' : 'outline'}
-                      onClick={() => setRole(r)}
+                      key={r.value}
+                      variant={role === r.value ? 'default' : 'outline'}
+                      onClick={() => setRole(r.value)}
                     >
-                      {r === 'CUSTOMER' ? 'Cliente' : 'Organizador'}
+                      {r.label}
                     </Button>
                   ))}
                 </div>
@@ -129,7 +139,9 @@ export default function LoginPage() {
 
       <div className="mt-6 rounded border-2 border-dashed border-black/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
         <p className="font-bold text-foreground">CONTAS DEMO (seed):</p>
-        <p className="mt-1">cliente@ingressa.com · organizador@ingressa.com — 123456</p>
+        <p className="mt-1">
+          cliente · organizador · portaria @ingressa.com — senha 123456
+        </p>
       </div>
     </div>
   );

@@ -158,12 +158,13 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="number">Número — use 0002 no fim p/ recusar</Label>
+                <Label htmlFor="number">Número do cartão</Label>
                 <Input
                   id="number"
                   className="font-mono"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 19))}
+                  placeholder="4242 4242 4242 4242"
                   required
                 />
               </div>
@@ -191,9 +192,12 @@ export default function CheckoutPage() {
               {error && <ErrorBox message={error} />}
               {declined && (
                 <Alert status="error">
-                  <AlertTitle>Pagamento recusado</AlertTitle>
+                  <AlertTitle>
+                    Pagamento recusado{pay.data?.declineCode ? ` — ${pay.data.declineCode}` : ''}
+                  </AlertTitle>
                   <AlertDescription>
-                    Tente outro cartão — a reserva continua válida até a expiração.
+                    {pay.data?.declineMessage ??
+                      'Tente outro cartão — a reserva continua válida até a expiração.'}
                   </AlertDescription>
                 </Alert>
               )}
@@ -203,8 +207,9 @@ export default function CheckoutPage() {
                   ? 'Processando…'
                   : `Pagar ${formatBRL(reservation.totalCents)}`}
               </Button>
-              <p className="text-center font-mono text-xs text-muted-foreground">
-                teste: qualquer cartão aprova, exceto terminado em 0002
+              <p className="text-center font-mono text-xs leading-relaxed text-muted-foreground">
+                cartões de teste Stripe: 4242 4242 4242 4242 aprova ·
+                4000 0000 0000 0002 recusa
               </p>
             </form>
           </CardContent>
