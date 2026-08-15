@@ -6,6 +6,8 @@ import { api, apiErrorMessage, formatBRL, formatDateTime } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Badge, ErrorBox, Poster, Spinner } from '../components/ui';
 import SeatMapPicker from '../components/SeatMapPicker';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,10 +38,7 @@ export default function EventDetailPage() {
   const reserve = useMutation({
     mutationFn: async () => {
       const body = isSeated ? { seatIds: [...selectedSeats] } : { quantity };
-      const res = await api.post<Reservation>(
-        `/reservations/events/${id}`,
-        body,
-      );
+      const res = await api.post<Reservation>(`/reservations/events/${id}`, body);
       return res.data;
     },
     onSuccess: (reservation) => {
@@ -80,9 +79,9 @@ export default function EventDetailPage() {
     return (
       <div className="space-y-4">
         <ErrorBox message="Evento não encontrado." />
-        <Link to="/" className="text-sm text-amber-400 hover:underline">
+        <Button variant="outline" size="sm" render={<Link to="/" />}>
           ← Voltar para explorar
-        </Link>
+        </Button>
       </div>
     );
 
@@ -92,115 +91,119 @@ export default function EventDetailPage() {
   return (
     <div className="space-y-8">
       <section className="grid gap-6 md:grid-cols-[2fr_3fr]">
-        <div className="overflow-hidden rounded-2xl border border-zinc-800">
+        <Card className="p-0">
           <div className="aspect-[2/3] md:aspect-auto md:h-full md:min-h-[320px]">
-            <Poster src={event.posterUrl} alt={event.title} />
+            <Poster src={event.posterUrl} alt={event.title} className="border-0" />
           </div>
-        </div>
+        </Card>
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={event.category === 'SHOW' ? 'amber' : 'zinc'}>
+            <Badge tone={event.category === 'SHOW' ? 'default' : 'secondary'}>
               {event.category === 'SHOW' ? 'Show' : 'Filme'}
             </Badge>
-            <Badge>{event.seatingMode === 'SEATED' ? 'Assentos marcados' : 'Pista'}</Badge>
-            {event.organizer && <Badge>por {event.organizer.name}</Badge>}
+            <Badge tone="outline">
+              {event.seatingMode === 'SEATED' ? 'Assentos marcados' : 'Pista'}
+            </Badge>
+            {event.organizer && <Badge tone="warning">por {event.organizer.name}</Badge>}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{event.title}</h1>
-          <p className="text-sm leading-relaxed text-zinc-300">{event.description}</p>
-          <div className="grid gap-2 text-sm text-zinc-400">
+          <h1 className="font-head text-3xl leading-tight tracking-tight">{event.title}</h1>
+          <p className="text-sm leading-relaxed">{event.description}</p>
+          <div className="grid gap-2 text-sm">
             <p>
-              <span className="text-zinc-500">Quando:</span> {formatDateTime(event.startsAt)}
+              <span className="text-muted-foreground">Quando:</span>{' '}
+              <strong>{formatDateTime(event.startsAt)}</strong>
             </p>
             <p>
-              <span className="text-zinc-500">Onde:</span> {event.venue} — {event.city}
+              <span className="text-muted-foreground">Onde:</span>{' '}
+              <strong>
+                {event.venue} — {event.city}
+              </strong>
             </p>
             <p>
-              <span className="text-zinc-500">Preço:</span>{' '}
-              <span className="font-semibold text-amber-400">
+              <span className="text-muted-foreground">Preço:</span>{' '}
+              <span className="rounded border-2 border-black bg-primary px-2 py-0.5 font-head">
                 {formatBRL(event.priceCents)}
               </span>{' '}
               por ingresso
             </p>
             {event.availability && (
-              <p>
-                <span className="text-zinc-500">Disponíveis:</span>{' '}
-                {soldOut ? 'esgotado' : event.availability.available} de{' '}
-                {event.availability.total}
+              <p className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+                {soldOut ? 'esgotado' : `${event.availability.available} de ${event.availability.total} disponíveis`}
               </p>
             )}
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-        <h2 className="mb-5 text-lg font-semibold">
-          {isSeated ? 'Escolha seus assentos' : 'Escolha a quantidade'}
-        </h2>
+      <Card>
+        <CardContent className="space-y-5">
+          <h2 className="font-head text-lg">
+            {isSeated ? 'Escolha seus assentos' : 'Escolha a quantidade'}
+          </h2>
 
-        {isSeated ? (
-          seatMap ? (
-            <SeatMapPicker
-              seatMap={seatMap}
-              selected={selectedSeats}
-              onToggle={toggleSeat}
-            />
+          {isSeated ? (
+            seatMap ? (
+              <SeatMapPicker
+                seatMap={seatMap}
+                selected={selectedSeats}
+                onToggle={toggleSeat}
+              />
+            ) : (
+              <Spinner label="Montando mapa…" />
+            )
           ) : (
-            <Spinner label="Montando mapa…" />
-          )
-        ) : (
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-zinc-400">Ingressos (máx. 10):</span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="h-9 w-9 rounded-lg border border-zinc-700 text-lg font-bold text-zinc-300 transition hover:border-amber-400"
-              >
-                −
-              </button>
-              <span className="w-10 text-center text-lg font-bold">{quantity}</span>
-              <button
-                onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-                className="h-9 w-9 rounded-lg border border-zinc-700 text-lg font-bold text-zinc-300 transition hover:border-amber-400"
-              >
-                +
-              </button>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">Ingressos (máx. 10):</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                >
+                  −
+                </Button>
+                <span className="w-10 text-center font-head text-lg">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+                >
+                  +
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {error && (
-          <div className="mt-4">
-            <ErrorBox message={error} />
-          </div>
-        )}
+          {error && <ErrorBox message={error} />}
 
-        <div className="mt-6 flex flex-col items-stretch justify-between gap-4 border-t border-zinc-800 pt-5 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-sm text-zinc-500">
-              {isSeated
-                ? `${selectedSeats.size} assento(s) selecionado(s)`
-                : `${quantity} ingresso(s)`}
-            </p>
-            <p className="text-2xl font-bold text-amber-400">{formatBRL(totalCents)}</p>
+          <div className="flex flex-col items-stretch justify-between gap-4 border-t-2 border-dashed border-black/30 pt-5 sm:flex-row sm:items-center">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                {isSeated
+                  ? `${selectedSeats.size} assento(s) selecionado(s)`
+                  : `${quantity} ingresso(s)`}
+              </p>
+              <p className="font-head text-2xl">{formatBRL(totalCents)}</p>
+            </div>
+            <Button
+              size="lg"
+              disabled={soldOut || reserve.isPending}
+              onClick={handleReserve}
+            >
+              {reserve.isPending
+                ? 'Reservando…'
+                : soldOut
+                  ? 'Esgotado'
+                  : user
+                    ? 'Reservar e pagar'
+                    : 'Entrar para reservar'}
+            </Button>
           </div>
-          <button
-            onClick={handleReserve}
-            disabled={soldOut || reserve.isPending}
-            className="rounded-xl bg-amber-400 px-8 py-3 font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:opacity-40"
-          >
-            {reserve.isPending
-              ? 'Reservando…'
-              : soldOut
-                ? 'Esgotado'
-                : user
-                  ? 'Reservar e ir para o pagamento'
-                  : 'Entrar para reservar'}
-          </button>
-        </div>
-        <p className="mt-3 text-xs text-zinc-500">
-          A reserva fica bloqueada por 10 minutos até a confirmação do pagamento.
-        </p>
-      </section>
+          <p className="font-mono text-xs text-muted-foreground">
+            ⏱ A reserva fica bloqueada por 10 minutos até a confirmação do pagamento.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
