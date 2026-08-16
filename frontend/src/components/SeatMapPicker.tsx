@@ -9,7 +9,7 @@ function StageHeader({ category }: { category: SeatMap['category'] }) {
   if (category === 'MOVIE') {
     return (
       <div className="mx-auto w-full max-w-md">
-        <div className="rounded border-2 border-black bg-ink px-6 py-3 text-center font-head text-sm tracking-[0.4em] text-background shadow-sm">
+        <div className="rounded border-2 border-black bg-black px-6 py-3 text-center font-head text-sm tracking-[0.4em] text-white shadow-sm">
           TELA
         </div>
         <p className="mt-1 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
