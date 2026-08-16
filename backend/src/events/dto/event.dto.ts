@@ -1,4 +1,7 @@
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsIn,
   IsInt,
   IsISO8601,
@@ -38,8 +41,18 @@ export class CreateEventDto {
   @MinLength(2)
   city: string;
 
+  /** compat: data única (equivale a sessionsAt com um item) */
+  @IsOptional()
   @IsISO8601()
-  startsAt: string;
+  startsAt?: string;
+
+  /** cinema: múltiplas sessões do mesmo filme, cada uma vira um evento */
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(21)
+  @IsISO8601({}, { each: true })
+  sessionsAt?: string[];
 
   @IsIn(['SEATED', 'STANDING'])
   seatingMode: 'SEATED' | 'STANDING';

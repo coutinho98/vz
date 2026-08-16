@@ -60,7 +60,7 @@ export default function TicketSharePage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Onde</span>
                 <span className="font-bold">
-                  {ticket.event.venue} — {ticket.event.city}
+                  {ticket.event.venue} · {ticket.event.city}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -94,7 +94,7 @@ export default function TicketSharePage() {
                 }
               >
                 {ticket.status === 'VALID'
-                  ? 'Válido — pronto para entrada'
+                  ? 'Válido, pronto para entrada'
                   : ticket.status === 'USED'
                     ? `Utilizado${ticket.checkedInAt ? ' em ' + formatDateTime(ticket.checkedInAt) : ''}`
                     : 'Cancelado'}

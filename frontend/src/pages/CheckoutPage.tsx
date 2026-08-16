@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { CalendarDays, MapPin } from 'lucide-react';
 import type { PayResponse, Reservation } from '../api/types';
-import { api, apiErrorMessage, formatBRL, formatDateTime } from '../api/client';
-import { Badge, ErrorBox, Spinner } from '../components/ui';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { api, apiErrorMessage, formatBRL } from '../api/client';
+import { ErrorBox, Poster, Spinner } from '../components/ui';
+
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,7 +74,7 @@ export default function CheckoutPage() {
         <Alert status="warning">
           <AlertTitle>Reserva expirada</AlertTitle>
           <AlertDescription>
-            O tempo de bloqueio dos lugares terminou e eles foram liberados — você pode
+            O tempo de bloqueio dos lugares terminou e eles foram liberados. Você pode
             iniciar uma nova reserva.
           </AlertDescription>
         </Alert>
@@ -102,50 +104,92 @@ export default function CheckoutPage() {
   }
 
   const seatsLabel = reservation.seats?.length
-    ? reservation.seats.map((s) => `${s.row}${s.number}`).join(', ')
+    ? reservation.seats.map((s) => `${s.row}${s.number}`).join(' · ')
     : `${reservation.quantity} ingresso(s) pista`;
 
   const minutesLeft = Math.max(
     0,
     Math.floor((new Date(reservation.expiresAt).getTime() - Date.now()) / 60000),
   );
+  const urgent = minutesLeft <= 2;
+
+  const start = new Date(reservation.event.startsAt);
+  const dateLong = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' })
+    .format(start)
+    .replace('.', '');
+  const time = new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(start);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-head text-2xl tracking-tight">Pagamento</h1>
-        <Badge tone={minutesLeft <= 2 ? 'red' : 'warning'}>
-          ⏱ expira em {minutesLeft} min
-        </Badge>
+        <span
+          className={`flex items-center gap-2 border-2 border-black px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-widest shadow-sm ${
+            urgent ? 'animate-pulse bg-destructive text-destructive-foreground' : 'bg-primary'
+          }`}
+        >
+          <span className="size-2 rounded-full border border-current bg-background" aria-hidden />
+          expira em {minutesLeft} min
+        </span>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumo</CardTitle>
-            <CardDescription>{reservation.event.title}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p className="text-muted-foreground">{formatDateTime(reservation.event.startsAt)}</p>
-            <p className="text-muted-foreground">
-              {reservation.event.venue} — {reservation.event.city}
-            </p>
-            <p className="rounded border-2 border-black bg-muted px-2 py-1 font-mono text-xs uppercase tracking-wide">
-              {seatsLabel}
-            </p>
-            <div className="flex items-center justify-between border-t-2 border-dashed border-black/30 pt-3">
-              <span className="text-muted-foreground">Total</span>
-              <span className="rounded border-2 border-black bg-primary px-2 py-0.5 font-head text-lg">
-                {formatBRL(reservation.totalCents)}
-              </span>
+      <div className="grid items-start gap-6 md:grid-cols-2">
+        <Card className="relative p-0">
+          <div className="flex">
+            <div className="w-20 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-24">
+              <Poster
+                src={reservation.event.posterUrl}
+                alt={reservation.event.title}
+                className="h-full border-0"
+              />
             </div>
-          </CardContent>
+
+            <span
+              aria-hidden
+              className="absolute left-20 top-0 z-10 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-24"
+            />
+            <span
+              aria-hidden
+              className="absolute bottom-0 left-20 z-10 size-4 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-24"
+            />
+
+            <CardContent className="flex min-w-0 flex-1 flex-col gap-2 py-3">
+              <h2 className="font-head text-base leading-snug">
+                {reservation.event.title}
+              </h2>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <p className="flex items-center gap-1.5">
+                  <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+                  {dateLong} · <strong className="text-foreground">{time}</strong>
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <MapPin className="size-3.5 shrink-0" aria-hidden />
+                  <span className="truncate">
+                    {reservation.event.venue} · {reservation.event.city}
+                  </span>
+                </p>
+              </div>
+              <p className="w-fit border-2 border-black bg-muted px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wide">
+                {seatsLabel}
+              </p>
+              <div className="mt-auto flex items-end justify-between gap-2 border-t-2 border-dashed border-black/25 pt-2">
+                <span className="text-xs text-muted-foreground">Total</span>
+                <span className="border-2 border-black bg-primary px-2 py-0.5 font-head text-lg shadow-sm">
+                  {formatBRL(reservation.totalCents)}
+                </span>
+              </div>
+            </CardContent>
+          </div>
         </Card>
 
         <Card>
           <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <h2 className="font-head text-sm uppercase tracking-widest text-muted-foreground">
+              <h2 className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <span className="h-2 w-2 border-2 border-black bg-primary" aria-hidden />
                 Cartão (simulado)
               </h2>
               <div className="space-y-1.5">
@@ -193,11 +237,11 @@ export default function CheckoutPage() {
               {declined && (
                 <Alert status="error">
                   <AlertTitle>
-                    Pagamento recusado{pay.data?.declineCode ? ` — ${pay.data.declineCode}` : ''}
+                    Pagamento recusado{pay.data?.declineCode ? ` · ${pay.data.declineCode}` : ''}
                   </AlertTitle>
                   <AlertDescription>
                     {pay.data?.declineMessage ??
-                      'Tente outro cartão — a reserva continua válida até a expiração.'}
+                      'Tente outro cartão. A reserva continua válida até a expiração.'}
                   </AlertDescription>
                 </Alert>
               )}

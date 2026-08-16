@@ -140,7 +140,7 @@ export default function LoginPage() {
       <div className="mt-6 rounded border-2 border-dashed border-black/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
         <p className="font-bold text-foreground">CONTAS DEMO (seed):</p>
         <p className="mt-1">
-          cliente · cliente2 · organizador · portaria @ingressa.com — senha 123456
+          cliente · cliente2 · organizador · portaria @ingressa.com · senha 123456
         </p>
       </div>
     </div>

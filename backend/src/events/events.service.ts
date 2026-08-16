@@ -25,11 +25,20 @@ export class EventsService {
     private hold: SeatsHoldService,
   ) {}
 
+  /**
+   * Cria o evento — ou, para cinema com `sessionsAt`, uma sessão por data
+   * (cada uma com mapa de assentos e ciclo de vida próprios), tudo-ou-nada.
+   */
   async create(user: AuthUser, dto: CreateEventDto) {
-    const startsAt = new Date(dto.startsAt);
-    if (Number.isNaN(startsAt.getTime())) {
-      throw new BadRequestException('Data do evento inválida');
+    const dates = (dto.sessionsAt?.length ? dto.sessionsAt : [dto.startsAt])
+      .filter((d): d is string => !!d)
+      .map((d) => new Date(d));
+    if (dates.length === 0 || dates.some((d) => Number.isNaN(d.getTime()))) {
+      throw new BadRequestException('Informe ao menos uma data de sessão válida');
     }
+    const unique = [...new Set(dates.map((d) => d.getTime()))].map(
+      (t) => new Date(t),
+    );
 
     if (dto.seatingMode === 'SEATED') {
       if (!dto.rowsCount || !dto.seatsPerRow) {
@@ -46,27 +55,34 @@ export class EventsService {
       throw new BadRequestException('Eventos de pista exigem capacidade');
     }
 
-    return this.prisma.event.create({
-      data: {
-        organizerId: user.id,
-        category: dto.category,
-        catalogRef: dto.catalogRef,
-        title: dto.title,
-        description: dto.description,
-        posterUrl: dto.posterUrl ?? null,
-        venue: dto.venue,
-        city: dto.city,
-        startsAt,
-        seatingMode: dto.seatingMode,
-        rowsCount: dto.rowsCount,
-        seatsPerRow: dto.seatsPerRow,
-        capacity: dto.capacity,
-        priceCents: dto.priceCents,
-        status: 'DRAFT',
-        seats: dto.seatingMode === 'SEATED' ? { create: this.buildSeats(dto) } : undefined,
-      },
-      include: { _count: { select: { seats: true } } },
-    });
+    return this.prisma.$transaction(
+      unique.map((startsAt) =>
+        this.prisma.event.create({
+          data: {
+            organizerId: user.id,
+            category: dto.category,
+            catalogRef: dto.catalogRef,
+            title: dto.title,
+            description: dto.description,
+            posterUrl: dto.posterUrl ?? null,
+            venue: dto.venue,
+            city: dto.city,
+            startsAt,
+            seatingMode: dto.seatingMode,
+            rowsCount: dto.rowsCount,
+            seatsPerRow: dto.seatsPerRow,
+            capacity: dto.capacity,
+            priceCents: dto.priceCents,
+            status: 'DRAFT',
+            seats:
+              dto.seatingMode === 'SEATED'
+                ? { create: this.buildSeats(dto) }
+                : undefined,
+          },
+          include: { _count: { select: { seats: true } } },
+        }),
+      ),
+    );
   }
 
   private buildSeats(dto: CreateEventDto) {

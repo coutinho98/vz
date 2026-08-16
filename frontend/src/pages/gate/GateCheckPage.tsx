@@ -134,7 +134,7 @@ export default function GateCheckPage() {
           >
             {!cameraOn && (
               <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-                Câmera desligada — clique em “Ligar câmera” para escanear o ingresso
+                Câmera desligada. Clique em “Ligar câmera” para escanear o ingresso
                 ou use a digitação manual abaixo.
               </p>
             )}

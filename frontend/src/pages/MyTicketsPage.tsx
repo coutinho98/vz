@@ -190,7 +190,7 @@ export default function MyTicketsPage() {
             <PendingReservationCard key={reservation.id} reservation={reservation} />
           ))}
           <p className="text-xs text-muted-foreground">
-            Os lugares ficam bloqueados só para você até o timer zerar — depois
+            Os lugares ficam bloqueados só para você até o timer zerar. Depois
             liberam automaticamente.
           </p>
         </section>

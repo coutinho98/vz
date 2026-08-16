@@ -46,6 +46,7 @@ export default function OrganizerEventFormPage() {
   const [seatingMode, setSeatingMode] = useState<'SEATED' | 'STANDING'>('SEATED');
   const [catalogRef, setCatalogRef] = useState<string | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
+  const [sessions, setSessions] = useState<string[]>(['']);
   const [error, setError] = useState<string | null>(null);
 
   const editing = !!id;
@@ -90,6 +91,17 @@ export default function OrganizerEventFormPage() {
       const priceCents = Math.round(
         Number(form.price.replace(/\./g, '').replace(',', '.')) * 100,
       );
+      if (editing) {
+        const body = {
+          title: form.title,
+          description: form.description,
+          venue: form.venue,
+          city: form.city,
+          startsAt: new Date(form.startsAt).toISOString(),
+          priceCents,
+        };
+        return api.patch(`/events/${id}`, body);
+      }
       const body = {
         category,
         catalogRef: catalogRef ?? undefined,
@@ -98,17 +110,16 @@ export default function OrganizerEventFormPage() {
         posterUrl: form.posterUrl ?? undefined,
         venue: form.venue,
         city: form.city,
-        startsAt: new Date(form.startsAt).toISOString(),
+        // filme em cartaz: cada sessão vira um evento próprio
+        sessionsAt: sessions
+          .filter(Boolean)
+          .map((d) => new Date(d).toISOString()),
         seatingMode,
         ...(seatingMode === 'SEATED'
           ? { rowsCount: Number(form.rowsCount), seatsPerRow: Number(form.seatsPerRow) }
           : { capacity: Number(form.capacity) }),
         priceCents,
       };
-      if (editing) {
-        const { category: _c, catalogRef: _r, posterUrl: _p, seatingMode: _s, ...rest } = body;
-        return api.patch(`/events/${id}`, rest);
-      }
       return api.post('/events', body);
     },
     onSuccess: () => {
@@ -209,7 +220,7 @@ export default function OrganizerEventFormPage() {
             )}
             {catalog?.source === 'fallback' && (
               <p className="font-mono text-xs text-muted-foreground">
-                TMDB_API_KEY ausente — usando catálogo local de fallback.
+                TMDB_API_KEY ausente, usando catálogo local de fallback.
               </p>
             )}
           </CardContent>
@@ -267,16 +278,64 @@ export default function OrganizerEventFormPage() {
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="startsAt">Data e hora</Label>
-                <Input
-                  id="startsAt"
-                  type="datetime-local"
-                  value={form.startsAt}
-                  onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-                  required
-                />
-              </div>
+              {editing ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="startsAt">Data e hora</Label>
+                  <Input
+                    id="startsAt"
+                    type="datetime-local"
+                    value={form.startsAt}
+                    onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
+                    required
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>
+                    Sessões (data e hora) — adicione uma por exibição
+                  </Label>
+                  <div className="space-y-2">
+                    {sessions.map((value, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          type="datetime-local"
+                          value={value}
+                          required
+                          onChange={(e) =>
+                            setSessions((prev) =>
+                              prev.map((v, i) => (i === index ? e.target.value : v)),
+                            )
+                          }
+                        />
+                        {sessions.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon-sm"
+                            aria-label="Remover sessão"
+                            onClick={() =>
+                              setSessions((prev) => prev.filter((_, i) => i !== index))
+                            }
+                          >
+                            ×
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={() => setSessions((prev) => [...prev, ''])}
+                  >
+                    + Adicionar sessão
+                  </Button>
+                  <p className="font-mono text-xs text-muted-foreground">
+                    cada sessão vira um evento com mapa de assentos próprio
+                  </p>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="price">Preço por ingresso (R$)</Label>
                 <Input
