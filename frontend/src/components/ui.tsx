@@ -36,7 +36,13 @@ export function Poster({
   const initial = alt.trim().charAt(0).toUpperCase() || '?';
   const bg = PLACEHOLDER_BG[posterSeed(alt) % PLACEHOLDER_BG.length];
   return (
-    <div className={cn('flex h-full w-full items-center justify-center border-2 border-black', bg, className)}>
+    <div
+      className={cn(
+        'flex aspect-[2/3] w-full items-center justify-center border-2 border-black',
+        bg,
+        className,
+      )}
+    >
       <span className="font-head text-5xl">{initial}</span>
     </div>
   );

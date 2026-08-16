@@ -106,9 +106,9 @@ export default function EventDetailPage() {
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 md:grid-cols-[2fr_3fr]">
-        <Card className="p-0">
-          <div className="aspect-[2/3] md:aspect-auto md:h-full md:min-h-[320px]">
+      <section className="grid gap-6 md:grid-cols-[minmax(0,2fr)_3fr]">
+        <Card className="mx-auto w-full max-w-xs p-0 md:mx-0">
+          <div className="aspect-[2/3]">
             <Poster src={event.posterUrl} alt={event.title} className="border-0" />
           </div>
         </Card>
