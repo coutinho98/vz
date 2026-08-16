@@ -15,10 +15,22 @@ services:
       timeout: 3s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--notify-keyspace-events', 'Ex']
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build: ./backend
     environment:
       DATABASE_URL: postgresql://ingressa:ingressa@db:5432/ingressa?schema=public
+      REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-me}
       TMDB_API_KEY: ${TMDB_API_KEY:-}
       PORT: 3000
@@ -26,6 +38,8 @@ services:
       - '3000:3000'
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     command: sh -c "npx prisma migrate deploy && node dist/src/main.js"
 

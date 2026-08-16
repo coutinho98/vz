@@ -11,6 +11,7 @@ e a portaria valida a entrada com câmera ou digitação manual.
 | -------- | ---------------------------------------- |
 | Frontend | React 19 + Vite + TypeScript + Tailwind 4 + NeoBrutalism kit |
 | Backend  | NestJS 11 + TypeScript + Prisma 7 + PostgreSQL 16 |
+| Tempo real | Redis 7 (holds de assento com TTL + keyspace events) + SSE |
 | Catálogo | [TMDB](https://www.themoviedb.org/) (filmes) + catálogo de shows local |
 
 ## Estrutura
@@ -110,10 +111,19 @@ npm run dev:web    # http://localhost:5173 (proxy /api -> :3000)
 
 ## Decisões técnicas
 
-- **Concorrência de assentos**: reserva dentro de transação com `updateMany` condicional
+- **Hold de assentos com Redis**: ao reservar, um script Lua conquista o lock
+  de *todos* os assentos de uma vez (`SET ... NX EX`, all-or-nothing) com TTL
+  de 10 min. Sem Redis (`REDIS_URL` vazio) o sistema cai para o modo
+  somente-Postgres — o `UPDATE ... WHERE reservation_id IS NULL` condicional
+  dentro da transação continua garantindo a anti-venda-dupla.
+- **Expiração orientada a evento**: `notify-keyspace-events Ex` avisa quando o
+  hold vence; a API varre a reserva correspondente no Postgres, libera os
+  assentos e notifica via SSE — sem cron.
+- **Mapa em tempo real (SSE)**: `GET /events/:id/seats/stream` transmite
+  `seats-updated` para quem tem o mapa aberto; o front invalida o cache e
+  refaz o `GET` (heartbeat de 25s mantém a conexão viva).
+- **Concorrência de assentos**: transação com `updateMany` condicional
   (`reservationId IS NULL`) — dois clientes disputando o mesmo lugar recebem `409`.
-- **Expiração de reservas**: varredura preguiçosa (`expireStaleReservations`) ao ler
-  mapa/criar reserva/pagar — sem necessidade de cron.
 - **TMDB opcional**: sem `TMDB_API_KEY` a API usa catálogo local de fallback, mantendo o
   fluxo completo funcionando offline.
 - **QR Code**: o backend emite apenas o código (`ING-XXXXX-XXXXX`); o QR é renderizado no
