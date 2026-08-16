@@ -9,6 +9,7 @@ import { EventsModule } from './events/events.module';
 import { GateModule } from './gate/gate.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RedisModule } from './redis/redis.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { TicketsModule } from './tickets/tickets.module';
 
@@ -16,6 +17,7 @@ import { TicketsModule } from './tickets/tickets.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    RedisModule,
     AuthModule,
     CatalogModule,
     EventsModule,
