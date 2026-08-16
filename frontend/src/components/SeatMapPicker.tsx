@@ -1,6 +1,41 @@
 import { useMemo } from 'react';
 import type { SeatMap } from '../api/types';
 
+/**
+ * O topo do mapa conversa com o cliente no vocabulário do evento:
+ * cinema vê TELA, show vê PALCO com holofotes.
+ */
+function StageHeader({ category }: { category: SeatMap['category'] }) {
+  if (category === 'MOVIE') {
+    return (
+      <div className="mx-auto w-full max-w-md">
+        <div className="rounded border-2 border-black bg-ink px-6 py-3 text-center font-head text-sm tracking-[0.4em] text-background shadow-sm">
+          TELA
+        </div>
+        <p className="mt-1 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          sessão com som remasterizado
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-md">
+      <div className="flex justify-center gap-6" aria-hidden="true">
+        <span className="font-mono text-lg leading-none">☀</span>
+        <span className="font-mono text-lg leading-none">☀</span>
+        <span className="font-mono text-lg leading-none">☀</span>
+      </div>
+      <div className="-mt-1 rounded border-2 border-black bg-primary px-6 py-3 text-center font-head text-sm tracking-[0.4em] shadow-sm">
+        PALCO
+      </div>
+      <p className="mt-1 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+        a área da pista fica atrás das fileiras
+      </p>
+    </div>
+  );
+}
+
 export default function SeatMapPicker({
   seatMap,
   selected,
@@ -21,9 +56,7 @@ export default function SeatMapPicker({
 
   return (
     <div className="space-y-5">
-      <div className="mx-auto w-full max-w-sm rounded border-2 border-black bg-accent py-2 text-center font-head text-sm tracking-[0.3em]">
-        TELA / PALCO
-      </div>
+      <StageHeader category={seatMap.category} />
 
       <div className="space-y-2">
         {seatMap.rows.map((row) => (

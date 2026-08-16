@@ -217,6 +217,7 @@ export class EventsService {
 
     return {
       seatingMode: event.seatingMode,
+      category: event.category,
       rows: [...rows.entries()].map(([row, seats]) => ({ row, seats })),
     };
   }

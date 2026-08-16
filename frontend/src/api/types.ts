@@ -70,6 +70,7 @@ export interface SeatMapSeat {
 
 export interface SeatMap {
   seatingMode: 'SEATED' | 'STANDING';
+  category: 'MOVIE' | 'SHOW';
   rows: { row: string; seats: SeatMapSeat[] }[];
 }
 
