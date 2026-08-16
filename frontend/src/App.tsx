@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import RequireRole from './components/RequireRole';
+import { useAuth } from './auth/AuthContext';
 import LoginPage from './pages/LoginPage';
 import ExplorePage from './pages/ExplorePage';
 import EventDetailPage from './pages/EventDetailPage';
@@ -15,11 +16,19 @@ import { Spinner } from './components/ui';
 
 const GateCheckPage = lazy(() => import('./pages/gate/GateCheckPage'));
 
+/** Usuário de portaria só tem um trabalho: validar ingressos. */
+function GateHome() {
+  const { user, loading } = useAuth();
+  if (loading) return <Spinner label="Carregando…" />;
+  if (user?.role === 'GATE') return <Navigate to="/portaria" replace />;
+  return <ExplorePage />;
+}
+
 export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<ExplorePage />} />
+        <Route index element={<GateHome />} />
         <Route path="/entrar" element={<LoginPage />} />
         <Route path="/eventos/:id" element={<EventDetailPage />} />
         <Route path="/t/:code" element={<TicketSharePage />} />
@@ -47,7 +56,7 @@ export default function App() {
           />
         </Route>
 
-        <Route path="*" element={<ExplorePage />} />
+        <Route path="*" element={<GateHome />} />
       </Route>
     </Routes>
   );

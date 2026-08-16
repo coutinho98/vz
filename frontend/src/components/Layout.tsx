@@ -30,28 +30,31 @@ export default function Layout() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <Logo />
           <nav className="flex items-center gap-1">
-            <NavLink to="/" end className={linkClass}>
-              Explorar
-            </NavLink>
-            {user?.role === 'CUSTOMER' && (
-              <NavLink to="/ingressos" className={linkClass}>
-                Meus ingressos
-              </NavLink>
-            )}
-            {user?.role === 'ORGANIZER' && (
-              <>
-                <NavLink to="/organizador" className={linkClass}>
-                  Meus eventos
-                </NavLink>
-                <NavLink to="/portaria" className={linkClass}>
-                  Portaria
-                </NavLink>
-              </>
-            )}
-            {user?.role === 'GATE' && (
+            {user?.role === 'GATE' ? (
               <NavLink to="/portaria" className={linkClass}>
                 Portaria
               </NavLink>
+            ) : (
+              <>
+                <NavLink to="/" end className={linkClass}>
+                  Explorar
+                </NavLink>
+                {user?.role === 'CUSTOMER' && (
+                  <NavLink to="/ingressos" className={linkClass}>
+                    Meus ingressos
+                  </NavLink>
+                )}
+                {user?.role === 'ORGANIZER' && (
+                  <>
+                    <NavLink to="/organizador" className={linkClass}>
+                      Meus eventos
+                    </NavLink>
+                    <NavLink to="/portaria" className={linkClass}>
+                      Portaria
+                    </NavLink>
+                  </>
+                )}
+              </>
             )}
           </nav>
           {user ? (
