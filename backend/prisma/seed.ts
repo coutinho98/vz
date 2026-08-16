@@ -6,6 +6,24 @@ import * as bcrypt from 'bcryptjs';
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+const TMDB_KEY = process.env.TMDB_API_KEY;
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
+
+/** Busca o pôster no TMDB; sem chave/resultado devolve null (placeholder do front). */
+async function poster(query: string): Promise<string | null> {
+  if (!TMDB_KEY) return null;
+  try {
+    const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&language=pt-BR&query=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { results: { poster_path: string | null }[] };
+    const path = data.results[0]?.poster_path;
+    return path ? `${TMDB_IMG}${path}` : null;
+  } catch {
+    return null;
+  }
+}
+
 function daysFromNow(days: number, hour = 21) {
   const date = new Date();
   date.setDate(date.getDate() + days);
@@ -83,6 +101,7 @@ async function main() {
       seatsPerRow: 10,
       priceCents: 4500,
       status: 'PUBLISHED',
+      posterUrl: await poster('Duna: Parte Dois'),
     },
     {
       organizerId: organizer.id,
@@ -130,6 +149,7 @@ async function main() {
       seatsPerRow: 8,
       priceCents: 3900,
       status: 'PUBLISHED',
+      posterUrl: await poster('Interstellar'),
     },
     {
       organizerId: organizer.id,
