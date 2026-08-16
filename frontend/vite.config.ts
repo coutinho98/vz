@@ -17,6 +17,16 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+        // SSE: garante que o stream não seja bufferizado pelo proxy
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const contentType = String(proxyRes.headers['content-type'] ?? '');
+            if (contentType.includes('text/event-stream')) {
+              proxyRes.headers['cache-control'] = 'no-cache';
+              proxyRes.headers['x-accel-buffering'] = 'no';
+            }
+          });
+        },
       },
     },
   },

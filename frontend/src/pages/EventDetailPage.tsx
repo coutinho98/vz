@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EventItem, Reservation, SeatMap } from '../api/types';
 import { api, apiErrorMessage, formatBRL, formatDateTime } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -9,9 +9,12 @@ import SeatMapPicker from '../components/SeatMapPicker';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
+
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const { data: event, isPending, isError } = useQuery<EventItem>({
@@ -29,6 +32,19 @@ export default function EventDetailPage() {
   const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState<string | null>(null);
+
+  // tempo real: mapa de assentos atualiza via SSE enquanto a página está aberta
+  useEffect(() => {
+    if (!id || !isSeated) return;
+    const source = new EventSource(`${API_BASE}/events/${id}/seats/stream`);
+    source.onmessage = (message) => {
+      if (message.data.includes('seats-updated')) {
+        void queryClient.invalidateQueries({ queryKey: ['seats', id] });
+        void queryClient.invalidateQueries({ queryKey: ['event', id] });
+      }
+    };
+    return () => source.close();
+  }, [id, isSeated, queryClient]);
 
   const totalCents = useMemo(() => {
     if (!event) return 0;
