@@ -94,15 +94,21 @@ const TONE_VARIANT: Partial<Record<BadgeTone, 'default' | 'secondary' | 'outline
 export function Badge({
   children,
   tone = 'default',
+  className,
 }: {
   children: React.ReactNode;
   tone?: BadgeTone;
+  className?: string;
 }) {
   const variant =
     tone === 'success' || tone === 'warning'
       ? 'outline'
       : (TONE_VARIANT[tone] ?? 'outline');
-  return <KitBadge variant={variant} className={TONE_CLASS[tone]}>{children}</KitBadge>;
+  return (
+    <KitBadge variant={variant} className={cn(TONE_CLASS[tone], className)}>
+      {children}
+    </KitBadge>
+  );
 }
 
 export function ErrorBox({ message }: { message: string }) {

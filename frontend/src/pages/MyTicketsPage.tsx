@@ -1,10 +1,84 @@
 import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import type { Ticket } from '../api/types';
-import { api, formatDateTime } from '../api/client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Reservation, Ticket } from '../api/types';
+import { api, formatBRL, formatDateTime } from '../api/client';
 import { Badge, Poster, Spinner } from '../components/ui';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+
+function useCountdown(expiresAt: string) {
+  const [left, setLeft] = useState(() =>
+    Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)),
+  );
+  useEffect(() => {
+    const timer = setInterval(
+      () =>
+        setLeft(
+          Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)),
+        ),
+      1000,
+    );
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+  const m = String(Math.floor(left / 60)).padStart(2, '0');
+  const s = String(left % 60).padStart(2, '0');
+  return { left, label: `${m}:${s}` };
+}
+
+function PendingReservationCard({ reservation }: { reservation: Reservation }) {
+  const queryClient = useQueryClient();
+  const { left, label } = useCountdown(reservation.expiresAt);
+
+  const cancel = useMutation({
+    mutationFn: async () => {
+      await api.delete(`/reservations/${reservation.id}`);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      void queryClient.invalidateQueries({ queryKey: ['seats'] });
+      void queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+
+  const seatsLabel = reservation.seats?.length
+    ? reservation.seats.map((s) => `${s.row}${s.number}`).join(', ')
+    : `${reservation.quantity} ingresso(s) pista`;
+
+  return (
+    <Card className="border-dashed">
+      <CardContent className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="warning">⏱ reserva pendente</Badge>
+            <Badge tone={left > 120 ? 'outline' : 'destructive'} className="font-mono">
+              {label}
+            </Badge>
+          </div>
+          <p className="truncate font-head text-base">{reservation.event.title}</p>
+          <p className="text-sm text-muted-foreground">
+            {formatDateTime(reservation.event.startsAt)} · {seatsLabel} ·{' '}
+            {formatBRL(reservation.totalCents)}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" nativeButton={false} render={<Link to={`/checkout/${reservation.id}`} />}>
+            Pagar agora
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={cancel.isPending}
+            onClick={() => cancel.mutate()}
+          >
+            {cancel.isPending ? 'Cancelando…' : 'Cancelar e liberar'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function Barcode({ code, className = '' }: { code: string; className?: string }) {
   const widths = code.split('').map((ch) => 2 + (ch.charCodeAt(0) % 4));
@@ -94,6 +168,13 @@ export default function MyTicketsPage() {
     queryFn: async () => (await api.get<Ticket[]>('/tickets/mine')).data,
   });
 
+  const { data: reservations } = useQuery<Reservation[]>({
+    queryKey: ['reservations'],
+    queryFn: async () => (await api.get<Reservation[]>('/reservations/mine')).data,
+    refetchInterval: 30_000, // pega expirações automáticas sem refresh
+  });
+  const pending = reservations?.filter((r) => r.status === 'PENDING') ?? [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -102,6 +183,21 @@ export default function MyTicketsPage() {
           Apresente o QR Code na entrada ou compartilhe pelo link.
         </p>
       </div>
+
+      {pending.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            Reservas aguardando pagamento
+          </h2>
+          {pending.map((reservation) => (
+            <PendingReservationCard key={reservation.id} reservation={reservation} />
+          ))}
+          <p className="text-xs text-muted-foreground">
+            Os lugares ficam bloqueados só para você até o timer zerar — depois
+            liberam automaticamente.
+          </p>
+        </section>
+      )}
 
       {isPending ? (
         <Spinner label="Carregando ingressos…" />
