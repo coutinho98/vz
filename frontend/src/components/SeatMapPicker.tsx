@@ -21,12 +21,13 @@ function StageHeader({ category }: { category: SeatMap['category'] }) {
 
   return (
     <div className="mx-auto w-full max-w-md">
-      <div className="flex justify-center gap-6" aria-hidden="true">
-        <span className="font-mono text-lg leading-none">☀</span>
-        <span className="font-mono text-lg leading-none">☀</span>
-        <span className="font-mono text-lg leading-none">☀</span>
+      {/* feixes de holofote caindo sobre o palco */}
+      <div className="flex justify-center gap-14" aria-hidden="true">
+        <span className="block h-9 w-6 origin-top -rotate-12 bg-gradient-to-b from-primary/70 to-transparent" />
+        <span className="block h-9 w-6 origin-top bg-gradient-to-b from-primary/70 to-transparent" />
+        <span className="block h-9 w-6 origin-top rotate-12 bg-gradient-to-b from-primary/70 to-transparent" />
       </div>
-      <div className="-mt-1 rounded border-2 border-black bg-primary px-6 py-3 text-center font-head text-sm tracking-[0.4em] shadow-sm">
+      <div className="-mt-2 rounded border-2 border-black bg-primary px-6 py-3 text-center font-head text-sm tracking-[0.4em] shadow-sm">
         PALCO
       </div>
       <p className="mt-1 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
