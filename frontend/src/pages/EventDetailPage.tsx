@@ -15,7 +15,7 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const { data: event, isPending, isError } = useQuery<EventItem>({
     queryKey: ['event', id],
@@ -151,11 +151,37 @@ export default function EventDetailPage() {
         </div>
       </section>
 
-      <Card>
-        <CardContent className="space-y-5">
-          <h2 className="font-head text-lg">
-            {isSeated ? 'Escolha seus assentos' : 'Escolha a quantidade'}
-          </h2>
+      {user && user.role !== 'CUSTOMER' ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+            <p className="font-head text-base">
+              Compra de ingressos é exclusiva de contas de cliente
+            </p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Você está logado como{' '}
+              <strong>{user.role === 'GATE' ? 'Portaria' : 'Organizador'}</strong>.
+              Esta conta valida ingressos na entrada
+              {user.role === 'ORGANIZER' && ' e gerencia eventos'} — para comprar,
+              entre com uma conta de cliente.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                logout();
+                navigate('/entrar', { state: { from: `/eventos/${id}` } });
+              }}
+            >
+              Trocar para conta de cliente
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="space-y-5">
+            <h2 className="font-head text-lg">
+              {isSeated ? 'Escolha seus assentos' : 'Escolha a quantidade'}
+            </h2>
 
           {isSeated ? (
             seatMap ? (
@@ -218,8 +244,9 @@ export default function EventDetailPage() {
           <p className="font-mono text-xs text-muted-foreground">
             ⏱ A reserva fica bloqueada por 10 minutos até a confirmação do pagamento.
           </p>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
