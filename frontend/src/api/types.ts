@@ -34,6 +34,13 @@ export interface EventAvailability {
   available: number;
 }
 
+export interface EventSession {
+  id: string;
+  startsAt: string;
+  status?: 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+  sold?: number;
+}
+
 export interface EventItem {
   id: string;
   title: string;
@@ -53,6 +60,9 @@ export interface EventItem {
   organizer?: { name: string };
   availability?: EventAvailability;
   _count?: { tickets: number; reservations: number };
+  /** sessões do mesmo filme no mesmo cinema (agrupamento estilo cinema) */
+  sessionCount?: number;
+  sessions?: EventSession[];
 }
 
 export interface EventsPage {

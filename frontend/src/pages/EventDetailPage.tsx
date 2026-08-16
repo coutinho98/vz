@@ -185,10 +185,46 @@ export default function EventDetailPage() {
                   <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center border-2 border-black bg-accent shadow-xs">
                     <CalendarDays className="size-4" aria-hidden />
                   </span>
-                  <p className="pt-1 text-sm">
-                    <span className="capitalize">{weekday}</span>, {dateLong} ·{' '}
-                    <strong>{time}</strong>
-                  </p>
+                  <div className="min-w-0 flex-1 pt-1">
+                    {event.sessionCount && event.sessionCount > 1 ? (
+                      <>
+                        <p className="text-sm">
+                          <strong>Em cartaz</strong> — escolha a sessão:
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {event.sessions?.map((s) => {
+                            const active = s.id === id;
+                            return (
+                              <Link
+                                key={s.id}
+                                to={`/eventos/${s.id}`}
+                                className={`border-2 border-black px-2 py-1 font-mono text-xs font-bold shadow-sm transition ${
+                                  active
+                                    ? 'bg-primary'
+                                    : 'bg-card hover:-translate-y-0.5 hover:shadow'
+                                }`}
+                              >
+                                {new Intl.DateTimeFormat('pt-BR', {
+                                  weekday: 'short',
+                                  day: '2-digit',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                                  .format(new Date(s.startsAt))
+                                  .replace(/\./g, '')}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="pt-1 text-sm">
+                        <span className="capitalize">{weekday}</span>, {dateLong} ·{' '}
+                        <strong>{time}</strong>
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center border-2 border-black bg-accent shadow-xs">

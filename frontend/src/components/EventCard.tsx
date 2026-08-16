@@ -92,10 +92,40 @@ export default function EventCard({ event }: { event: EventItem }) {
             </p>
 
             <div className="mt-auto flex items-end justify-between gap-3 border-t-2 border-dashed border-black/25 pt-2">
-              <div className="min-w-0 space-y-0.5">
-                <p className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-                  {weekday} {day} {month.toLowerCase()} · {time}
-                </p>
+              <div className="min-w-0 space-y-1">
+                {event.sessionCount && event.sessionCount > 1 ? (
+                  <>
+                    <p className="font-mono text-[11px] font-bold uppercase tracking-wide">
+                      Em cartaz · {event.sessionCount} sessões
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {event.sessions?.slice(0, 3).map((s) => (
+                        <span
+                          key={s.id}
+                          className="border-2 border-black bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold"
+                        >
+                          {new Intl.DateTimeFormat('pt-BR', {
+                            weekday: 'short',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                            .format(new Date(s.startsAt))
+                            .replace('.', '')}
+                        </span>
+                      ))}
+                      {(event.sessionCount ?? 0) > 3 && (
+                        <span className="self-center font-mono text-[10px] text-muted-foreground">
+                          +{(event.sessionCount ?? 0) - 3} horários
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {weekday} {day} {month.toLowerCase()} · {time}
+                  </p>
+                )}
                 {event.availability && (
                   <p
                     className={`font-mono text-[11px] uppercase tracking-wide ${

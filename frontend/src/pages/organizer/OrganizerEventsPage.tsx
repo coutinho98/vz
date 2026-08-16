@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EventItem } from '../../api/types';
-import { api, apiErrorMessage, formatBRL, formatDateTime } from '../../api/client';
+import { api, apiErrorMessage, formatBRL } from '../../api/client';
 import { Badge, ErrorBox, Spinner } from '../../components/ui';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,11 +13,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const statusBadge = (status: EventItem['status']) =>
-  status === 'PUBLISHED' ? 'success' : status === 'DRAFT' ? 'warning' : 'destructive';
-
-const statusLabel = (status: EventItem['status']) =>
-  status === 'PUBLISHED' ? 'Publicado' : status === 'DRAFT' ? 'Rascunho' : 'Cancelado';
+const sessionFmt = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'short',
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
 export default function OrganizerEventsPage() {
   const queryClient = useQueryClient();
@@ -28,8 +30,16 @@ export default function OrganizerEventsPage() {
   });
 
   const act = useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: 'publish' | 'cancel' }) => {
-      await api.post(`/events/${id}/${action}`);
+    mutationFn: async ({
+      ids,
+      action,
+    }: {
+      ids: string[];
+      action: 'publish' | 'cancel';
+    }) => {
+      for (const id of ids) {
+        await api.post(`/events/${id}/${action}`);
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['organizer-events'] }),
   });
@@ -57,77 +67,125 @@ export default function OrganizerEventsPage() {
 
       {events && events.length > 0 && (
         <div className="overflow-x-auto rounded border-2 border-black bg-card shadow-md">
-          <Table className="min-w-[760px]">
+          <Table className="min-w-[860px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Evento</TableHead>
-                <TableHead>Quando</TableHead>
+                <TableHead>Sessões</TableHead>
                 <TableHead>Preço</TableHead>
                 <TableHead>Vendidos</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.map((event) => (
-                <TableRow key={event.id}>
-                  <TableCell>
-                    <p className="font-bold">{event.title}</p>
-                    <p className="font-mono text-xs text-muted-foreground">
-                      {event.venue} · {event.city} ·{' '}
-                      {event.seatingMode === 'SEATED'
-                        ? `${event.rowsCount}×${event.seatsPerRow}`
-                        : `pista ${event.capacity}p`}
-                    </p>
-                  </TableCell>
-                  <TableCell>{formatDateTime(event.startsAt)}</TableCell>
-                  <TableCell className="font-bold">{formatBRL(event.priceCents)}</TableCell>
-                  <TableCell>{event._count?.tickets ?? 0}</TableCell>
-                  <TableCell>
-                    <Badge tone={statusBadge(event.status)}>{statusLabel(event.status)}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      {event.status === 'DRAFT' && (
-                        <>
-                          <Button
-                            size="xs"
-                            className="bg-green-500 hover:bg-green-600"
-                            onClick={() => act.mutate({ id: event.id, action: 'publish' })}
-                          >
-                            Publicar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            nativeButton={false} render={<Link to={`/organizador/${event.id}/editar`} />}
-                          >
-                            Editar
-                          </Button>
-                        </>
+              {events.map((event) => {
+                const sessions = event.sessions ?? [];
+                const drafts = sessions.filter((s) => s.status === 'DRAFT');
+                const published = sessions.filter((s) => s.status === 'PUBLISHED');
+                const totalSold = sessions.reduce((sum, s) => sum + (s.sold ?? 0), 0);
+                const allDraft = drafts.length === sessions.length;
+                const allPublished = published.length === sessions.length;
+
+                return (
+                  <TableRow key={event.id}>
+                    <TableCell>
+                      <p className="font-bold">{event.title}</p>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {event.venue} · {event.city} ·{' '}
+                        {event.seatingMode === 'SEATED'
+                          ? `${event.rowsCount}×${event.seatsPerRow}`
+                          : `pista ${event.capacity}p`}
+                      </p>
+                      {(event.sessionCount ?? 0) > 1 && (
+                        <Badge tone="outline" className="mt-1">
+                          {event.sessionCount} sessões
+                        </Badge>
                       )}
-                      {event.status === 'PUBLISHED' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            nativeButton={false} render={<Link to={`/portaria/${event.id}`} />}
-                          >
-                            Portaria
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="xs"
-                            onClick={() => act.mutate({ id: event.id, action: 'cancel' })}
-                          >
-                            Cancelar
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {sessions.slice(0, 3).map((s) => (
+                          <p key={s.id} className="flex items-center gap-1.5 font-mono text-xs">
+                            <span
+                              className={`inline-block size-2 border border-black ${
+                                s.status === 'PUBLISHED'
+                                  ? 'bg-green-500'
+                                  : s.status === 'DRAFT'
+                                    ? 'bg-yellow-400'
+                                    : 'bg-destructive'
+                              }`}
+                              aria-hidden
+                            />
+                            {sessionFmt.format(new Date(s.startsAt)).replace(/\./g, '')}
+                          </p>
+                        ))}
+                        {sessions.length > 3 && (
+                          <p className="font-mono text-xs text-muted-foreground">
+                            +{sessions.length - 3} sessões
+                          </p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold">{formatBRL(event.priceCents)}</TableCell>
+                    <TableCell>{totalSold}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        {allDraft && (
+                          <>
+                            <Button
+                              size="xs"
+                              className="bg-green-500 hover:bg-green-600"
+                              disabled={act.isPending}
+                              onClick={() =>
+                                act.mutate({
+                                  ids: sessions.map((s) => s.id),
+                                  action: 'publish',
+                                })
+                              }
+                            >
+                              Publicar {sessions.length > 1 ? 'todas' : ''}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              nativeButton={false} render={<Link to={`/organizador/${event.id}/editar`} />}
+                            >
+                              Editar
+                            </Button>
+                          </>
+                        )}
+                        {published.length > 0 && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              nativeButton={false} render={<Link to={`/portaria/${published[0].id}`} />}
+                            >
+                              Portaria
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="xs"
+                              disabled={act.isPending}
+                              onClick={() =>
+                                act.mutate({
+                                  ids: published.map((s) => s.id),
+                                  action: 'cancel',
+                                })
+                              }
+                            >
+                              Cancelar {published.length > 1 ? 'todas' : ''}
+                            </Button>
+                          </>
+                        )}
+                        {allPublished && (
+                          <Badge tone="success">Publicado</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

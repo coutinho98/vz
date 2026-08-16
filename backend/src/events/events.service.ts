@@ -96,6 +96,22 @@ export class EventsService {
     return seats;
   }
 
+  /**
+   * Chave de agrupamento: sessões do mesmo filme no mesmo cinema formam
+   * um único cartaz (modelo sessão de cinema). Shows nunca agrupam.
+   */
+  private groupKey(event: {
+    id: string;
+    category: string;
+    catalogRef: string | null;
+    title: string;
+    venue: string;
+    city: string;
+  }) {
+    if (event.category !== 'MOVIE') return `single|${event.id}`;
+    return `movie|${event.catalogRef ?? event.title}|${event.venue}|${event.city}`;
+  }
+
   async listPublished(query: QueryEventsDto) {
     const page = query.page ?? 1;
     const where: Prisma.EventWhereInput = {
@@ -113,22 +129,34 @@ export class EventsService {
         : {}),
     };
 
-    const [total, events] = await this.prisma.$transaction([
-      this.prisma.event.count({ where }),
-      this.prisma.event.findMany({
-        where,
-        orderBy: { startsAt: 'asc' },
-        take: PAGE_SIZE,
-        skip: (page - 1) * PAGE_SIZE,
-        include: { organizer: { select: { name: true } } },
-      }),
-    ]);
+    const events = await this.prisma.event.findMany({
+      where,
+      orderBy: { startsAt: 'asc' },
+      include: { organizer: { select: { name: true } } },
+    });
 
+    // agrupa sessões por filme e pagina os grupos (não as sessões)
+    const groups = new Map<string, typeof events>();
+    for (const event of events) {
+      const key = this.groupKey(event);
+      const list = groups.get(key) ?? [];
+      list.push(event);
+      groups.set(key, list);
+    }
+
+    const items = [...groups.values()].map((sessions) => {
+      const head = sessions[0];
+      return {
+        ...head,
+        availability: this.placeholderAvailability(head),
+        sessionCount: sessions.length,
+        sessions: sessions.map((s) => ({ id: s.id, startsAt: s.startsAt })),
+      };
+    });
+
+    const total = items.length;
     return {
-      items: events.map((event) => ({
-        ...event,
-        availability: this.placeholderAvailability(event),
-      })),
+      items: items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
       page,
       totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
       total,
@@ -149,10 +177,33 @@ export class EventsService {
   }
 
   async listMine(user: AuthUser) {
-    return this.prisma.event.findMany({
+    const events = await this.prisma.event.findMany({
       where: { organizerId: user.id },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { startsAt: 'asc' },
       include: { _count: { select: { tickets: true, reservations: true } } },
+    });
+
+    const groups = new Map<string, typeof events>();
+    for (const event of events) {
+      const key = this.groupKey(event);
+      const list = groups.get(key) ?? [];
+      list.push(event);
+      groups.set(key, list);
+    }
+
+    return [...groups.values()].map((sessions) => {
+      const head = sessions[0];
+      return {
+        ...head,
+        startsAt: sessions[sessions.length - 1].startsAt, // última sessão p/ ordenação
+        sessionCount: sessions.length,
+        sessions: sessions.map((s) => ({
+          id: s.id,
+          startsAt: s.startsAt,
+          status: s.status,
+          sold: s._count.tickets,
+        })),
+      };
     });
   }
 
@@ -166,7 +217,25 @@ export class EventsService {
     if (!event) throw new NotFoundException('Evento não encontrado');
 
     const availability = await this.availability(id, event);
-    return { ...event, availability };
+
+    // sessões do mesmo filme (seletor de horários na tela de detalhe)
+    let sessions = [{ id: event.id, startsAt: event.startsAt }];
+    if (event.category === 'MOVIE') {
+      sessions = await this.prisma.event.findMany({
+        where: {
+          status: 'PUBLISHED',
+          venue: event.venue,
+          city: event.city,
+          ...(event.catalogRef
+            ? { catalogRef: event.catalogRef }
+            : { title: event.title }),
+        },
+        orderBy: { startsAt: 'asc' },
+        select: { id: true, startsAt: true },
+      });
+    }
+
+    return { ...event, availability, sessionCount: sessions.length, sessions };
   }
 
   async availability(
