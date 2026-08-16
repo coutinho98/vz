@@ -21,7 +21,7 @@ async function main() {
   await prisma.event.deleteMany();
   await prisma.user.deleteMany();
 
-  const [organizer, customer, gate] = await Promise.all([
+  const [organizer, customer, customer2, gate] = await Promise.all([
     prisma.user.create({
       data: {
         name: 'Maria Organizadora',
@@ -34,6 +34,14 @@ async function main() {
       data: {
         name: 'João Cliente',
         email: 'cliente@ingressa.com',
+        passwordHash: await bcrypt.hash('123456', 10),
+        role: 'CUSTOMER',
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Carla Cliente',
+        email: 'cliente2@ingressa.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'CUSTOMER',
       },
@@ -209,10 +217,11 @@ async function main() {
     })),
   });
 
-  console.log('Seed concluído: 3 usuários, 6 eventos, 1 ingresso demo');
+  console.log('Seed concluído: 4 usuários, 6 eventos, 1 ingresso demo');
   console.log('  organizador@ingressa.com / 123456 (ORGANIZER)');
-  console.log('  cliente@ingressa.com   / 123456 (CUSTOMER)');
-  console.log('  portaria@ingressa.com  / 123456 (GATE)');
+  console.log('  cliente@ingressa.com    / 123456 (CUSTOMER)');
+  console.log('  cliente2@ingressa.com   / 123456 (CUSTOMER)');
+  console.log('  portaria@ingressa.com   / 123456 (GATE)');
 }
 
 main()
