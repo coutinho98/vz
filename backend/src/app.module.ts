@@ -11,6 +11,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { SeatsModule } from './seats/seats.module';
 import { TicketsModule } from './tickets/tickets.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { TicketsModule } from './tickets/tickets.module';
     AuthModule,
     CatalogModule,
     EventsModule,
+    SeatsModule,
     ReservationsModule,
     TicketsModule,
     PaymentsModule,

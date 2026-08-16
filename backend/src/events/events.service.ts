@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { SeatsHoldService } from '../seats/seats-hold.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import {
   CreateEventDto,
@@ -19,7 +20,10 @@ const PAGE_SIZE = 12;
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private hold: SeatsHoldService,
+  ) {}
 
   async create(user: AuthUser, dto: CreateEventDto) {
     const startsAt = new Date(dto.startsAt);
@@ -155,10 +159,20 @@ export class EventsService {
   ) {
     if (event.seatingMode === 'SEATED') {
       const total = (event.rowsCount ?? 0) * (event.seatsPerRow ?? 0);
-      const taken = await this.prisma.seat.count({
-        where: { eventId, reservationId: { not: null } },
-      });
-      return { total, available: total - taken };
+      const [taken, seatIds] = await Promise.all([
+        this.prisma.seat.count({
+          where: { eventId, reservationId: { not: null } },
+        }),
+        this.prisma.seat.findMany({
+          where: { eventId, reservationId: null },
+          select: { id: true },
+        }),
+      ]);
+      const held = await this.hold.heldSeatIds(
+        eventId,
+        seatIds.map((s) => s.id),
+      );
+      return { total, available: total - taken - held.size };
     }
 
     const sold = await this.prisma.reservation.aggregate({
@@ -181,6 +195,12 @@ export class EventsService {
       throw new BadRequestException('Este evento não tem mapa de assentos');
     }
 
+    // assentos segurados no Redis (hold de outra reserva em andamento)
+    const held = await this.hold.heldSeatIds(
+      eventId,
+      event.seats.map((s) => s.id),
+    );
+
     const rows = new Map<
       string,
       { id: string; number: number; status: 'FREE' | 'TAKEN' }[]
@@ -190,7 +210,7 @@ export class EventsService {
       list.push({
         id: seat.id,
         number: seat.number,
-        status: seat.reservationId ? 'TAKEN' : 'FREE',
+        status: seat.reservationId || held.has(seat.id) ? 'TAKEN' : 'FREE',
       });
       rows.set(seat.row, list);
     }

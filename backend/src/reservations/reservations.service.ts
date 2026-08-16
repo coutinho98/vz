@@ -3,17 +3,45 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
+import { SeatsBroadcastService } from '../seats/seats-broadcast.service';
+import { SeatsHoldService } from '../seats/seats-hold.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 
-const HOLD_MINUTES = 10;
+const HOLD_SECONDS = Number(process.env.RESERVATION_HOLD_SECONDS ?? 600);
 
 @Injectable()
-export class ReservationsService {
-  constructor(private prisma: PrismaService) {}
+export class ReservationsService implements OnModuleInit {
+  private readonly logger = new Logger(ReservationsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private hold: SeatsHoldService,
+    private broadcast: SeatsBroadcastService,
+    private redisService: RedisService,
+  ) {}
+
+  /**
+   * Keyspace notifications do Redis: quando um hold expira sozinho, a
+   * reserva PENDING correspondente já venceu (mesmo TTL) — varre, libera
+   * os assentos no banco e avisa quem está olhando o mapa via SSE.
+   */
+  onModuleInit() {
+    this.redisService.keyExpired$.subscribe((key) => {
+      const eventId = SeatsHoldService.eventIdFromKey(key);
+      if (!eventId) return;
+      void this.expireStale(eventId)
+        .then(() => this.broadcast.broadcast(eventId))
+        .catch((err) => this.logger.warn(`expiração ${key}: ${err.message}`));
+    });
+  }
 
   async create(user: AuthUser, eventId: string, dto: CreateReservationDto) {
     await this.expireStale(eventId);
@@ -46,37 +74,64 @@ export class ReservationsService {
     priceCents: number,
     seatIds: string[],
   ) {
-    return this.prisma.$transaction(async (tx) => {
-      const reservation = await tx.reservation.create({
-        data: {
-          userId: user.id,
-          eventId,
-          quantity: seatIds.length,
-          totalCents: priceCents * seatIds.length,
-          expiresAt: new Date(Date.now() + HOLD_MINUTES * 60 * 1000),
-        },
+    // 1. lock efêmero no Redis (all-or-nothing via Lua) — recusa imediata
+    const reservationId = randomUUID();
+    const locked = await this.hold.hold(
+      eventId,
+      seatIds,
+      reservationId,
+      HOLD_SECONDS,
+    );
+    if (!locked) {
+      throw new ConflictException(
+        'Um ou mais assentos acabaram de ser reservados',
+      );
+    }
+
+    try {
+      // 2. posse provisória no Postgres (rede de segurança p/ modo sem Redis)
+      const reservation = await this.prisma.$transaction(async (tx) => {
+        const reservation = await tx.reservation.create({
+          data: {
+            id: reservationId,
+            userId: user.id,
+            eventId,
+            quantity: seatIds.length,
+            totalCents: priceCents * seatIds.length,
+            expiresAt: new Date(Date.now() + HOLD_SECONDS * 1000),
+          },
+        });
+
+        const taken = await tx.seat.updateMany({
+          where: {
+            id: { in: seatIds },
+            eventId,
+            reservationId: null,
+          },
+          data: { reservationId: reservation.id },
+        });
+        if (taken.count !== seatIds.length) {
+          throw new ConflictException(
+            'Um ou mais assentos acabaram de ser reservados',
+          );
+        }
+
+        return tx.reservation.findUniqueOrThrow({
+          where: { id: reservation.id },
+          include: {
+            event: { select: { id: true, title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
+            seats: { orderBy: [{ row: 'asc' }, { number: 'asc' }] },
+          },
+        });
       });
 
-      const taken = await tx.seat.updateMany({
-        where: {
-          id: { in: seatIds },
-          eventId,
-          reservationId: null,
-        },
-        data: { reservationId: reservation.id },
-      });
-      if (taken.count !== seatIds.length) {
-        throw new ConflictException('Um ou mais assentos acabaram de ser reservados');
-      }
-
-      return tx.reservation.findUniqueOrThrow({
-        where: { id: reservation.id },
-        include: {
-          event: { select: { title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
-          seats: { orderBy: [{ row: 'asc' }, { number: 'asc' }] },
-        },
-      });
-    });
+      this.broadcast.broadcast(eventId);
+      return reservation;
+    } catch (err) {
+      // compensação: devolve os locks que não viraram reserva
+      await this.hold.release(eventId, seatIds);
+      throw err;
+    }
   }
 
   private async createStanding(
@@ -102,7 +157,7 @@ export class ReservationsService {
           eventId,
           quantity,
           totalCents: priceCents * quantity,
-          expiresAt: new Date(Date.now() + HOLD_MINUTES * 60 * 1000),
+          expiresAt: new Date(Date.now() + HOLD_SECONDS * 1000),
         },
         include: {
           event: { select: { title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
@@ -142,6 +197,7 @@ export class ReservationsService {
   async cancel(user: AuthUser, reservationId: string) {
     const reservation = await this.prisma.reservation.findUnique({
       where: { id: reservationId },
+      include: { seats: { select: { id: true } } },
     });
     if (!reservation) throw new NotFoundException('Reserva não encontrada');
     if (reservation.userId !== user.id) {
@@ -161,20 +217,25 @@ export class ReservationsService {
         data: { status: 'CANCELLED' },
       }),
     ]);
+    await this.hold.release(
+      reservation.eventId,
+      reservation.seats.map((s) => s.id),
+    );
+    this.broadcast.broadcast(reservation.eventId);
 
     return { cancelled: true };
   }
 
-  async expireStale(eventId?: string) {
+  async expireStale(eventId?: string): Promise<string[]> {
     const stale = await this.prisma.reservation.findMany({
       where: {
         status: 'PENDING',
         expiresAt: { lt: new Date() },
         ...(eventId ? { eventId } : {}),
       },
-      select: { id: true },
+      select: { id: true, eventId: true },
     });
-    if (stale.length === 0) return;
+    if (stale.length === 0) return [];
 
     await this.prisma.$transaction([
       this.prisma.seat.updateMany({
@@ -186,5 +247,7 @@ export class ReservationsService {
         data: { status: 'CANCELLED' },
       }),
     ]);
+
+    return [...new Set(stale.map((r) => r.eventId))];
   }
 }

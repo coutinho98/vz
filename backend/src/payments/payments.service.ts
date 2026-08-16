@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { ReservationsService } from '../reservations/reservations.service';
+import { SeatsHoldService } from '../seats/seats-hold.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { PayReservationDto } from './dto/pay-reservation.dto';
 
@@ -44,6 +45,7 @@ export class PaymentsService {
     private prisma: PrismaService,
     private reservationsService: ReservationsService,
     private ticketsService: TicketsService,
+    private hold: SeatsHoldService,
   ) {}
 
   async pay(user: AuthUser, reservationId: string, dto: PayReservationDto) {
@@ -107,6 +109,11 @@ export class PaymentsService {
     });
 
     const tickets = await this.ticketsService.issueForReservation(reservation);
+    // posse definitiva: o lock efêmero sai do Redis, o Postgres manda agora
+    await this.hold.release(
+      reservation.eventId,
+      reservation.seats.map((s) => s.id),
+    );
     return { outcome: 'APPROVED', payment, tickets };
   }
 
