@@ -51,16 +51,17 @@ export class TicketsService {
       });
     }
 
-    const ticket = await this.prisma.ticket.create({
-      data: {
+    // pista: um ingresso individual por pessoa — cada um tem código/QR
+    // próprio e é validado de forma independente na entrada
+    return this.prisma.ticket.createManyAndReturn({
+      data: Array.from({ length: reservation.quantity }, () => ({
         code: generateTicketCode(),
         reservationId: reservation.id,
         eventId: reservation.eventId,
         userId: reservation.userId,
-        quantity: reservation.quantity,
-      },
+        quantity: 1,
+      })),
     });
-    return [ticket];
   }
 
   async mine(user: AuthUser) {

@@ -72,7 +72,7 @@ function PendingReservationCard({ reservation }: { reservation: Reservation }) {
             disabled={cancel.isPending}
             onClick={() => cancel.mutate()}
           >
-            {cancel.isPending ? 'Cancelando…' : 'Cancelar e liberar'}
+            {cancel.isPending ? 'Cancelando…' : 'Cancelar'}
           </Button>
         </div>
       </CardContent>
@@ -124,10 +124,7 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
               </>
             ) : (
               <>
-                Pista —{' '}
-                <span className="rounded border-2 border-black bg-primary px-1.5 font-head">
-                  {ticket.quantity}p
-                </span>
+                Pista <span className="text-muted-foreground">· ingresso individual</span>
               </>
             )}
           </p>

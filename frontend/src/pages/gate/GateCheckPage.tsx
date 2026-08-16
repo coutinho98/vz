@@ -210,7 +210,7 @@ export default function GateCheckPage() {
                   titular: {result.ticket.holderFirstName}
                   {result.ticket.seatLabel
                     ? ` · lugar ${result.ticket.seatLabel}`
-                    : ` · ${result.ticket.quantity}p`}
+                    : ' · pista'}
                 </p>
                 {result.ticket.checkedInAt && (
                   <p>check-in: {formatDateTime(result.ticket.checkedInAt)}</p>

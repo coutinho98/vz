@@ -70,7 +70,7 @@ export default function TicketSharePage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{ticket.seatLabel ? 'Lugar' : 'Pista'}</span>
                 <span className="rounded border-2 border-black bg-primary px-1.5 font-head">
-                  {ticket.seatLabel ?? `${ticket.quantity} pessoa(s)`}
+                  {ticket.seatLabel ?? 'Pista'}
                 </span>
               </div>
             </div>

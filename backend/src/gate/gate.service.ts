@@ -115,7 +115,7 @@ export class GateService {
 
     return {
       status: 'VALID',
-      message: `Entrada liberada — ${updated.seatLabel ?? `${updated.quantity} pessoa(s)`}.`,
+      message: `Entrada liberada — ${updated.seatLabel ?? 'pista'}.`,
       ticket: this.toTicketDto(updated),
     };
   }

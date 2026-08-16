@@ -125,7 +125,7 @@ export default function LoginPage() {
           <p className="text-center text-sm text-muted-foreground">
             {mode === 'login' ? 'Não tem conta? ' : 'Já tem conta? '}
             <button
-              className="font-bold underline underline-offset-4"
+              className="font-bold cursor-pointer underline underline-offset-4"
               onClick={() => {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setError(null);
