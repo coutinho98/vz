@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Timer } from 'lucide-react';
 import type { Reservation, Ticket } from '../api/types';
 import { api, formatBRL, formatDateTime } from '../api/client';
 import { Badge, Poster, Spinner } from '../components/ui';
@@ -51,7 +52,10 @@ function PendingReservationCard({ reservation }: { reservation: Reservation }) {
       <CardContent className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="warning">⏱ reserva pendente</Badge>
+            <Badge tone="warning" className="gap-1">
+              <Timer className="size-3" aria-hidden />
+              reserva pendente
+            </Badge>
             <Badge tone={left > 120 ? 'outline' : 'destructive'} className="font-mono">
               {label}
             </Badge>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, MapPin } from 'lucide-react';
+import { CalendarDays, MapPin, Timer } from 'lucide-react';
 import type { EventItem, Reservation, SeatMap } from '../api/types';
 import { api, apiErrorMessage, formatBRL } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -401,8 +401,9 @@ export default function EventDetailPage() {
                     : 'Entrar para reservar'}
             </Button>
           </div>
-          <p className="font-mono text-xs text-muted-foreground">
-            ⏱ A reserva fica bloqueada por 10 minutos até a confirmação do pagamento.
+          <p className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+            <Timer className="size-3.5" aria-hidden />
+            A reserva fica bloqueada por 10 minutos até a confirmação do pagamento.
           </p>
           </CardContent>
         </Card>
