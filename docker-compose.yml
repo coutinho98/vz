@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ingressa
-      POSTGRES_PASSWORD: ingressa
-      POSTGRES_DB: ingressa
+      POSTGRES_USER: vz
+      POSTGRES_PASSWORD: vz
+      POSTGRES_DB: vz
     ports:
       - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ingressa -d ingressa']
+      test: ['CMD-SHELL', 'pg_isready -U vz -d vz']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -29,7 +29,7 @@ services:
   api:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql://ingressa:ingressa@db:5432/ingressa?schema=public
+      DATABASE_URL: postgresql://vz:vz@db:5432/vz?schema=public
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-me}
       TMDB_API_KEY: ${TMDB_API_KEY:-}

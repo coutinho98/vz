@@ -1,7 +1,7 @@
 {
-  "name": "ingressa-api",
+  "name": "vz-api",
   "version": "0.0.1",
-  "description": "Ingressa API — eventos, reservas, ingressos e portaria",
+  "description": "VZ API — eventos, reservas, ingressos e portaria",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

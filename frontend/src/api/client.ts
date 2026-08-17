@@ -6,18 +6,18 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('ingressa:token');
+  const token = localStorage.getItem('vz:token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 export function setAuthToken(token: string | null) {
-  if (token) localStorage.setItem('ingressa:token', token);
-  else localStorage.removeItem('ingressa:token');
+  if (token) localStorage.setItem('vz:token', token);
+  else localStorage.removeItem('vz:token');
 }
 
 export function getStoredToken() {
-  return localStorage.getItem('ingressa:token');
+  return localStorage.getItem('vz:token');
 }
 
 export function apiErrorMessage(error: unknown): string {

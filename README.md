@@ -1,4 +1,4 @@
-# Ingressa
+# VZ
 
 Plataforma de eventos e ingressos: organizadores montam eventos a partir de um catálogo
 externo (filmes via TMDB + shows locais), clientes reservam lugares — assentos marcados
@@ -17,7 +17,7 @@ e a portaria valida a entrada com câmera ou digitação manual.
 ## Estrutura
 
 ```
-ingressa/
+vz/
 ├── backend/
 │   └── src/
 │       ├── auth/          # JWT, papéis (organizador/cliente), guards
@@ -55,8 +55,8 @@ docker compose exec api npx tsx prisma/seed.ts
 
 ```bash
 # 1. banco (uma vez)
-sudo -u postgres psql -c "CREATE USER ingressa WITH PASSWORD 'ingressa' CREATEDB;"
-sudo -u postgres psql -c "CREATE DATABASE ingressa OWNER ingressa;"
+sudo -u postgres psql -c "CREATE USER vz WITH PASSWORD 'vz' CREATEDB;"
+sudo -u postgres psql -c "CREATE DATABASE vz OWNER vz;"
 
 # 2. dependências
 npm run install:all
@@ -77,8 +77,8 @@ npm run dev:web    # http://localhost:5173 (proxy /api -> :3000)
 
 | Papel       | E-mail                     | Senha   |
 | ----------- | -------------------------- | ------- |
-| Organizador | organizador@ingressa.com   | 123456  |
-| Cliente     | cliente@ingressa.com       | 123456  |
+| Organizador | organizador@vz.com   | 123456  |
+| Cliente     | cliente@vz.com       | 123456  |
 
 ## Fluxos implementados
 

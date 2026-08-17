@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded border-2 border-black bg-primary font-head text-sm shadow-sm">
-        IN
+      <span className="flex size-9 items-center justify-center border-2 border-black bg-primary font-head text-sm shadow-sm">
+        VZ
       </span>
-      <span className="font-head text-xl tracking-tight">ingressa.</span>
+      <span className="font-head text-xl tracking-tight">
+        vz<span className="text-primary">.</span>
+      </span>
     </Link>
   );
 }
@@ -84,7 +86,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <footer className="border-t-2 border-black bg-black py-5 text-center font-mono text-[11px] uppercase tracking-[0.25em] text-background/70">
-        ingressa · plataforma de eventos e ingressos · teste técnico
+        vz · plataforma de eventos e ingressos · teste técnico
       </footer>
     </div>
   );

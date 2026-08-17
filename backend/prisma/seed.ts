@@ -43,7 +43,7 @@ async function main() {
     prisma.user.create({
       data: {
         name: 'Maria Organizadora',
-        email: 'organizador@ingressa.com',
+        email: 'organizador@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'ORGANIZER',
       },
@@ -51,7 +51,7 @@ async function main() {
     prisma.user.create({
       data: {
         name: 'João Cliente',
-        email: 'cliente@ingressa.com',
+        email: 'cliente@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'CUSTOMER',
       },
@@ -59,7 +59,7 @@ async function main() {
     prisma.user.create({
       data: {
         name: 'Carla Cliente',
-        email: 'cliente2@ingressa.com',
+        email: 'cliente2@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'CUSTOMER',
       },
@@ -67,7 +67,7 @@ async function main() {
     prisma.user.create({
       data: {
         name: 'Pablo Portaria',
-        email: 'portaria@ingressa.com',
+        email: 'portaria@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'GATE',
       },
@@ -238,10 +238,10 @@ async function main() {
   });
 
   console.log('Seed concluído: 4 usuários, 6 eventos, 1 ingresso demo');
-  console.log('  organizador@ingressa.com / 123456 (ORGANIZER)');
-  console.log('  cliente@ingressa.com    / 123456 (CUSTOMER)');
-  console.log('  cliente2@ingressa.com   / 123456 (CUSTOMER)');
-  console.log('  portaria@ingressa.com   / 123456 (GATE)');
+  console.log('  organizador@vz.com / 123456 (ORGANIZER)');
+  console.log('  cliente@vz.com    / 123456 (CUSTOMER)');
+  console.log('  cliente2@vz.com   / 123456 (CUSTOMER)');
+  console.log('  portaria@vz.com   / 123456 (GATE)');
 }
 
 main()
