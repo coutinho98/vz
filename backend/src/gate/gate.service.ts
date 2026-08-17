@@ -115,7 +115,9 @@ export class GateService {
 
     return {
       status: 'VALID',
-      message: `Entrada liberada — ${updated.seatLabel ?? 'pista'}.`,
+      message: `Entrada liberada — ${updated.seatLabel ?? 'pista'}${
+        updated.kind === 'HALF' ? ' · MEIA: verificar documento' : ''
+      }.`,
       ticket: this.toTicketDto(updated),
     };
   }
@@ -141,6 +143,7 @@ export class GateService {
     code: string;
     seatLabel: string | null;
     quantity: number;
+    kind: string;
     checkedInAt: Date | null;
     user: { name: string };
   }) {
@@ -148,6 +151,7 @@ export class GateService {
       code: ticket.code,
       seatLabel: ticket.seatLabel,
       quantity: ticket.quantity,
+      kind: ticket.kind,
       holderFirstName: ticket.user.name.split(' ')[0],
       checkedInAt: ticket.checkedInAt,
     };

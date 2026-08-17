@@ -127,6 +127,11 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
                 Pista <span className="text-muted-foreground">· ingresso individual</span>
               </>
             )}
+            {ticket.kind === 'HALF' && (
+              <span className="ml-2 rounded border-2 border-black bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
+                meia
+              </span>
+            )}
           </p>
           <div className="flex flex-wrap gap-2 pt-1.5">
             <Button variant="outline" size="xs" nativeButton={false} render={<Link to={`/t/${ticket.code}`} />}>

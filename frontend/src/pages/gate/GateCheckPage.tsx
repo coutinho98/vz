@@ -211,6 +211,9 @@ export default function GateCheckPage() {
                   {result.ticket.seatLabel
                     ? ` · lugar ${result.ticket.seatLabel}`
                     : ' · pista'}
+                  {result.ticket.kind === 'HALF' && (
+                    <strong className="text-yellow-700"> · MEIA — pedir documento</strong>
+                  )}
                 </p>
                 {result.ticket.checkedInAt && (
                   <p>check-in: {formatDateTime(result.ticket.checkedInAt)}</p>

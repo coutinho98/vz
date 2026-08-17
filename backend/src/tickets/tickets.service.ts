@@ -27,19 +27,23 @@ export class TicketsService {
     eventId: string;
     userId: string;
     quantity: number;
+    halfCount?: number;
   }) {
     const event = await this.prisma.event.findUnique({
       where: { id: reservation.eventId },
-      select: { seatingMode: true },
+      select: { seatingMode: true, priceCents: true },
     });
     const seats = await this.prisma.seat.findMany({
       where: { reservationId: reservation.id },
       orderBy: [{ row: 'asc' }, { number: 'asc' }],
     });
+    const fullPrice = event?.priceCents ?? 0;
+    const halfPrice = Math.round(fullPrice / 2);
+    const halfCount = Math.min(reservation.halfCount ?? 0, reservation.quantity);
 
     if (event?.seatingMode === 'SEATED') {
       return this.prisma.ticket.createManyAndReturn({
-        data: seats.map((seat) => ({
+        data: seats.map((seat, i) => ({
           code: generateTicketCode(),
           reservationId: reservation.id,
           eventId: reservation.eventId,
@@ -47,6 +51,8 @@ export class TicketsService {
           seatId: seat.id,
           seatLabel: `${seat.row}${seat.number}`,
           quantity: 1,
+          kind: i < halfCount ? 'HALF' : 'FULL',
+          priceCents: i < halfCount ? halfPrice : fullPrice,
         })),
       });
     }
@@ -54,12 +60,14 @@ export class TicketsService {
     // pista: um ingresso individual por pessoa — cada um tem código/QR
     // próprio e é validado de forma independente na entrada
     return this.prisma.ticket.createManyAndReturn({
-      data: Array.from({ length: reservation.quantity }, () => ({
+      data: Array.from({ length: reservation.quantity }, (_, i) => ({
         code: generateTicketCode(),
         reservationId: reservation.id,
         eventId: reservation.eventId,
         userId: reservation.userId,
         quantity: 1,
+        kind: i < halfCount ? 'HALF' : 'FULL',
+        priceCents: i < halfCount ? halfPrice : fullPrice,
       })),
     });
   }
@@ -108,6 +116,8 @@ export class TicketsService {
       status: ticket.status,
       seatLabel: ticket.seatLabel,
       quantity: ticket.quantity,
+      kind: ticket.kind,
+      priceCents: ticket.priceCents,
       checkedInAt: ticket.checkedInAt,
       event: ticket.event,
       holderFirstName: ticket.user.name.split(' ')[0],

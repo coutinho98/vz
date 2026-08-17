@@ -70,6 +70,7 @@ model Reservation {
   event      Event     @relation(fields: [eventId], references: [id])
   status     String    @default("PENDING") // PENDING | CONFIRMED | CANCELLED
   quantity   Int       @default(0) // ingressos pista (STANDING)
+  halfCount  Int       @default(0) // quantos ingressos são meia-entrada
   totalCents Int
   expiresAt  DateTime
   createdAt  DateTime  @default(now())
@@ -107,6 +108,8 @@ model Ticket {
   seat          Seat?        @relation(fields: [seatId], references: [id])
   seatLabel     String?
   quantity      Int          @default(1)
+  kind          String       @default("FULL") // FULL | HALF (meia-entrada)
+  priceCents    Int          @default(0) // preço efetivamente pago
   status        String       @default("VALID") // VALID | USED | CANCELLED
   checkedInAt   DateTime?
   createdAt     DateTime     @default(now())

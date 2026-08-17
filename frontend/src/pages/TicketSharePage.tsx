@@ -68,9 +68,16 @@ export default function TicketSharePage() {
                 <span className="font-bold">{ticket.holderFirstName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{ticket.seatLabel ? 'Lugar' : 'Pista'}</span>
-                <span className="rounded border-2 border-black bg-primary px-1.5 font-head">
-                  {ticket.seatLabel ?? 'Pista'}
+                <span className="text-muted-foreground">{ticket.seatLabel ? 'Lugar' : 'Tipo'}</span>
+                <span className="flex items-center gap-1.5">
+                  {ticket.kind === 'HALF' && (
+                    <span className="rounded border-2 border-black bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
+                      meia
+                    </span>
+                  )}
+                  <span className="rounded border-2 border-black bg-primary px-1.5 font-head">
+                    {ticket.seatLabel ?? 'Pista'}
+                  </span>
                 </span>
               </div>
             </div>

@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Reservation" ADD COLUMN     "halfCount" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "Ticket" ADD COLUMN     "kind" TEXT NOT NULL DEFAULT 'FULL',
+ADD COLUMN     "priceCents" INTEGER NOT NULL DEFAULT 0;

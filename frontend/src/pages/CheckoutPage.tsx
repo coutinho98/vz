@@ -107,6 +107,9 @@ export default function CheckoutPage() {
     ? reservation.seats.map((s) => `${s.row}${s.number}`).join(' · ')
     : `${reservation.quantity} ingresso(s) pista`;
 
+  const half = reservation.halfCount ?? 0;
+  const full = reservation.quantity - half;
+
   const minutesLeft = Math.max(
     0,
     Math.floor((new Date(reservation.expiresAt).getTime() - Date.now()) / 60000),
@@ -175,6 +178,11 @@ export default function CheckoutPage() {
               <p className="w-fit border-2 border-black bg-muted px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wide">
                 {seatsLabel}
               </p>
+              {half > 0 && (
+                <p className="font-mono text-[11px] text-muted-foreground">
+                  {full} inteira(s) + {half} meia-entrada(s) · documento na portaria
+                </p>
+              )}
               <div className="mt-auto flex items-end justify-between gap-2 border-t-2 border-dashed border-black/25 pt-2">
                 <span className="text-xs text-muted-foreground">Total</span>
                 <span className="border-2 border-black bg-primary px-2 py-0.5 font-head text-lg shadow-sm">

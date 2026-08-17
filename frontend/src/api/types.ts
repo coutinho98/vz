@@ -94,6 +94,7 @@ export interface Reservation {
   id: string;
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
   quantity: number;
+  halfCount?: number;
   totalCents: number;
   expiresAt: string;
   createdAt: string;
@@ -117,11 +118,15 @@ export interface Payment {
   createdAt: string;
 }
 
+export type TicketKind = 'FULL' | 'HALF';
+
 export interface Ticket {
   id: string;
   code: string;
   seatLabel: string | null;
   quantity: number;
+  kind?: TicketKind;
+  priceCents?: number;
   status: 'VALID' | 'USED' | 'CANCELLED';
   checkedInAt: string | null;
   createdAt: string;
@@ -140,6 +145,8 @@ export interface PublicTicket {
   status: 'VALID' | 'USED' | 'CANCELLED';
   seatLabel: string | null;
   quantity: number;
+  kind?: TicketKind;
+  priceCents?: number;
   checkedInAt: string | null;
   event: Ticket['event'];
   holderFirstName: string;
@@ -163,6 +170,7 @@ export interface CheckInResponse {
     code: string;
     seatLabel: string | null;
     quantity: number;
+    kind?: TicketKind;
     holderFirstName: string;
     checkedInAt: string | null;
   };

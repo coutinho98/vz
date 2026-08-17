@@ -17,6 +17,21 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 
 const HOLD_SECONDS = Number(process.env.RESERVATION_HOLD_SECONDS ?? 600);
 
+/** preço unitário da meia-entrada (arredondado para centavos) */
+export function halfPriceOf(priceCents: number) {
+  return Math.round(priceCents / 2);
+}
+
+/** total = inteiras + meias — única fonte de verdade, usada também no front via API */
+export function reservationTotal(
+  priceCents: number,
+  count: number,
+  halfCount: number,
+) {
+  const full = count - halfCount;
+  return full * priceCents + halfCount * halfPriceOf(priceCents);
+}
+
 @Injectable()
 export class ReservationsService implements OnModuleInit {
   private readonly logger = new Logger(ReservationsService.name);
@@ -59,13 +74,28 @@ export class ReservationsService implements OnModuleInit {
       if (!dto.seatIds?.length) {
         throw new BadRequestException('Selecione pelo menos um assento');
       }
-      return this.createSeated(user, event.id, event.priceCents, dto.seatIds);
+      const halfCount = Math.min(dto.halfCount ?? 0, dto.seatIds.length);
+      return this.createSeated(
+        user,
+        event.id,
+        event.priceCents,
+        dto.seatIds,
+        halfCount,
+      );
     }
 
     if (!dto.quantity) {
       throw new BadRequestException('Informe a quantidade de ingressos');
     }
-    return this.createStanding(user, event.id, event.priceCents, dto.quantity, event.capacity ?? 0);
+    const halfCount = Math.min(dto.halfCount ?? 0, dto.quantity);
+    return this.createStanding(
+      user,
+      event.id,
+      event.priceCents,
+      dto.quantity,
+      halfCount,
+      event.capacity ?? 0,
+    );
   }
 
   private async createSeated(
@@ -73,6 +103,7 @@ export class ReservationsService implements OnModuleInit {
     eventId: string,
     priceCents: number,
     seatIds: string[],
+    halfCount: number,
   ) {
     // 1. lock efêmero no Redis (all-or-nothing via Lua) — recusa imediata
     const reservationId = randomUUID();
@@ -97,7 +128,8 @@ export class ReservationsService implements OnModuleInit {
             userId: user.id,
             eventId,
             quantity: seatIds.length,
-            totalCents: priceCents * seatIds.length,
+            halfCount,
+            totalCents: reservationTotal(priceCents, seatIds.length, halfCount),
             expiresAt: new Date(Date.now() + HOLD_SECONDS * 1000),
           },
         });
@@ -139,6 +171,7 @@ export class ReservationsService implements OnModuleInit {
     eventId: string,
     priceCents: number,
     quantity: number,
+    halfCount: number,
     capacity: number,
   ) {
     return this.prisma.$transaction(async (tx) => {
@@ -156,7 +189,8 @@ export class ReservationsService implements OnModuleInit {
           userId: user.id,
           eventId,
           quantity,
-          totalCents: priceCents * quantity,
+          halfCount,
+          totalCents: reservationTotal(priceCents, quantity, halfCount),
           expiresAt: new Date(Date.now() + HOLD_SECONDS * 1000),
         },
         include: {

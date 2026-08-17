@@ -32,6 +32,7 @@ export default function EventDetailPage() {
 
   const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
   const [quantity, setQuantity] = useState(1);
+  const [halfCount, setHalfCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // tempo real: mapa de assentos atualiza via SSE enquanto a página está aberta
@@ -47,14 +48,25 @@ export default function EventDetailPage() {
     return () => source.close();
   }, [id, isSeated, queryClient]);
 
+  const ticketCount = isSeated ? selectedSeats.size : quantity;
+  const effectiveHalf = Math.min(halfCount, ticketCount); // não exceder o total
   const totalCents = useMemo(() => {
     if (!event) return 0;
-    return isSeated ? selectedSeats.size * event.priceCents : quantity * event.priceCents;
-  }, [event, isSeated, selectedSeats, quantity]);
+    const full = ticketCount - effectiveHalf;
+    return (
+      full * event.priceCents + effectiveHalf * Math.round(event.priceCents / 2)
+    );
+  }, [event, ticketCount, effectiveHalf]);
+
+  useEffect(() => {
+    setHalfCount((h) => Math.min(h, isSeated ? selectedSeats.size : quantity));
+  }, [isSeated, selectedSeats, quantity]);
 
   const reserve = useMutation({
     mutationFn: async () => {
-      const body = isSeated ? { seatIds: [...selectedSeats] } : { quantity };
+      const body = isSeated
+        ? { seatIds: [...selectedSeats], halfCount: effectiveHalf }
+        : { quantity, halfCount: effectiveHalf };
       const res = await api.post<Reservation>(`/reservations/events/${id}`, body);
       return res.data;
     },
@@ -331,12 +343,47 @@ export default function EventDetailPage() {
 
           {error && <ErrorBox message={error} />}
 
+          {ticketCount > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded border-2 border-dashed border-black/40 bg-muted/40 px-3 py-2.5">
+              <div>
+                <p className="font-mono text-xs font-bold uppercase tracking-wide">
+                  Meias-entradas
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  estudante · 60+ · PCD — documento verificado na portaria
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Menos meia-entrada"
+                  onClick={() => setHalfCount((h) => Math.max(0, h - 1))}
+                >
+                  −
+                </Button>
+                <span className="w-8 text-center font-head text-lg">
+                  {effectiveHalf}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Mais meia-entrada"
+                  disabled={effectiveHalf >= ticketCount}
+                  onClick={() => setHalfCount((h) => Math.min(ticketCount, h + 1))}
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col items-stretch justify-between gap-4 border-t-2 border-dashed border-black/30 pt-5 sm:flex-row sm:items-center">
             <div>
               <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                {isSeated
-                  ? `${selectedSeats.size} assento(s) selecionado(s)`
-                  : `${quantity} ingresso(s)`}
+                {ticketCount} ingresso(s)
+                {effectiveHalf > 0 &&
+                  ` · ${ticketCount - effectiveHalf} inteira(s) + ${effectiveHalf} meia(s)`}
               </p>
               <p className="font-head text-2xl">{formatBRL(totalCents)}</p>
             </div>

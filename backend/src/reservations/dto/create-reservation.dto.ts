@@ -26,4 +26,11 @@ export class CreateReservationDto {
   @Min(1)
   @Max(10)
   quantity?: number;
+
+  /** quantos ingressos são meia-entrada (estudante/60+/PCD) */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  halfCount?: number;
 }
