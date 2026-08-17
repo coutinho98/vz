@@ -31,7 +31,7 @@ export default function EventCard({ event }: { event: EventItem }) {
       to={`/eventos/${event.id}`}
       className="group block h-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
     >
-      <Card className="relative h-full p-0 transition-[box-shadow,transform] duration-300 ease-out group-hover:-translate-y-[3px] group-hover:shadow-lg">
+      <Card className="relative h-full p-0 transition-all duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-lg">
         <div className="flex h-full">
           {/* pôster com perfuração de ingresso no lado direito */}
           <div
