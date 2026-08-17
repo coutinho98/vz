@@ -42,6 +42,7 @@ export default function EventCard({ event }: { event: EventItem }) {
             <Poster
               src={event.posterUrl}
               alt={event.title}
+              genre={event.category === 'SHOW' ? 'ao vivo' : 'cinema'}
               className="h-full border-0 object-cover"
             />
 

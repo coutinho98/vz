@@ -6,7 +6,12 @@ import {
 } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 
-const PLACEHOLDER_BG = ['bg-primary', 'bg-accent', 'bg-muted', 'bg-[#c5d5ff]'];
+const POSTER_THEMES = [
+  { bg: 'bg-primary', ink: 'text-primary-foreground' },
+  { bg: 'bg-accent', ink: 'text-foreground' },
+  { bg: 'bg-[#c5d5ff]', ink: 'text-foreground' },
+  { bg: 'bg-muted', ink: 'text-foreground' },
+];
 
 function posterSeed(alt: string) {
   let hash = 0;
@@ -14,13 +19,59 @@ function posterSeed(alt: string) {
   return Math.abs(hash);
 }
 
+/**
+ * Cartaz tipográfico para itens sem imagem (shows): o nome vira o pôster,
+ * estilo capa de disco punk/indie. Cores determinísticas pelo título.
+ */
+function TypographicPoster({ title, genre }: { title: string; genre?: string }) {
+  const theme = POSTER_THEMES[posterSeed(title) % POSTER_THEMES.length];
+  const words = title.replace(/[—–-]/g, ' ').split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > 10) {
+      if (current) lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+
+  return (
+    <div
+      className={`flex aspect-[2/3] w-full flex-col justify-between border-2 border-black p-3 ${theme.bg} ${theme.ink}`}
+    >
+      <div className="flex flex-1 flex-col justify-center">
+        {lines.slice(0, 4).map((line, i) => (
+          <span
+            key={i}
+            className="font-head uppercase leading-[0.95] tracking-tight"
+            style={{ fontSize: `clamp(1rem, ${18 / Math.max(line.length, 6)}em, 2.6rem)` }}
+          >
+            {line}
+          </span>
+        ))}
+      </div>
+      {genre && (
+        <p className="border-t-2 border-current/40 pt-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em]">
+          {genre}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function Poster({
   src,
   alt,
+  genre,
   className = '',
 }: {
   src: string | null;
   alt: string;
+  genre?: string;
   className?: string;
 }) {
   if (src) {
@@ -33,19 +84,7 @@ export function Poster({
       />
     );
   }
-  const initial = alt.trim().charAt(0).toUpperCase() || '?';
-  const bg = PLACEHOLDER_BG[posterSeed(alt) % PLACEHOLDER_BG.length];
-  return (
-    <div
-      className={cn(
-        'flex aspect-[2/3] w-full items-center justify-center border-2 border-black',
-        bg,
-        className,
-      )}
-    >
-      <span className="font-head text-5xl">{initial}</span>
-    </div>
-  );
+  return <TypographicPoster title={alt} genre={genre} />;
 }
 
 export function Spinner({ label = 'Carregando…' }: { label?: string }) {

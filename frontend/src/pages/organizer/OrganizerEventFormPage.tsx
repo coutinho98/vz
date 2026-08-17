@@ -200,9 +200,9 @@ export default function OrganizerEventFormPage() {
                       catalogRef === item.ref && 'ring-4 ring-primary',
                     )}
                   >
-                    <div className="aspect-[2/3]">
-                      <Poster src={item.posterUrl} alt={item.title} className="border-0" />
-                    </div>
+                <div className="aspect-[2/3]">
+                  <Poster src={item.posterUrl} alt={item.title} genre={item.genre ?? undefined} className="border-0" />
+                </div>
                     <div className="border-t-2 border-black p-2">
                       <p className="line-clamp-2 text-xs font-bold leading-snug">{item.title}</p>
                       <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
