@@ -37,6 +37,27 @@ const emptyForm: EventForm = {
   capacity: '500',
 };
 
+const brDateTime = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'long',
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+/** Confirma em português o que foi escolhido no picker (que segue o idioma do SO). */
+function DateHint({ value }: { value: string }) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return (
+    <p className="font-mono text-xs text-muted-foreground">
+      → {brDateTime.format(date)}
+    </p>
+  );
+}
+
 export default function OrganizerEventFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -288,6 +309,7 @@ export default function OrganizerEventFormPage() {
                     onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
                     required
                   />
+                  <DateHint value={form.startsAt} />
                 </div>
               ) : (
                 <div className="space-y-1.5 sm:col-span-2">
@@ -296,30 +318,33 @@ export default function OrganizerEventFormPage() {
                   </Label>
                   <div className="space-y-2">
                     {sessions.map((value, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          type="datetime-local"
-                          value={value}
-                          required
-                          onChange={(e) =>
-                            setSessions((prev) =>
-                              prev.map((v, i) => (i === index ? e.target.value : v)),
-                            )
-                          }
-                        />
-                        {sessions.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon-sm"
-                            aria-label="Remover sessão"
-                            onClick={() =>
-                              setSessions((prev) => prev.filter((_, i) => i !== index))
+                      <div key={index} className="space-y-1">
+                        <div className="flex gap-2">
+                          <Input
+                            type="datetime-local"
+                            value={value}
+                            required
+                            onChange={(e) =>
+                              setSessions((prev) =>
+                                prev.map((v, i) => (i === index ? e.target.value : v)),
+                              )
                             }
-                          >
-                            ×
-                          </Button>
-                        )}
+                          />
+                          {sessions.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              aria-label="Remover sessão"
+                              onClick={() =>
+                                setSessions((prev) => prev.filter((_, i) => i !== index))
+                              }
+                            >
+                              ×
+                            </Button>
+                          )}
+                        </div>
+                        <DateHint value={value} />
                       </div>
                     ))}
                   </div>
