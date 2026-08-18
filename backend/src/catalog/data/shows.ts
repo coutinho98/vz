@@ -103,13 +103,4 @@ export const SHOWS: CatalogItem[] = [
     releaseYear: 2026,
     genre: 'MPB',
   },
-  {
-    ref: 'show-orquestra',
-    category: 'SHOW',
-    title: 'Orquestra Sinfônica — Cinema ao Vivo',
-    description: 'Trilhas de cinema clássicas executadas ao vivo em concertos comentados.',
-    posterUrl: null,
-    releaseYear: 2026,
-    genre: 'Erudito',
-  },
 ];
