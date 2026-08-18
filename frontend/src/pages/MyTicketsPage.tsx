@@ -177,7 +177,7 @@ export default function MyTicketsPage() {
   const { data: reservations } = useQuery<Reservation[]>({
     queryKey: ['reservations'],
     queryFn: async () => (await api.get<Reservation[]>('/reservations/mine')).data,
-    refetchInterval: 30_000, // pega expirações automáticas sem refresh
+    refetchInterval: 30_000, // pega expirações automáticas sem refreshs
   });
   const pending = reservations?.filter((r) => r.status === 'PENDING') ?? [];
 

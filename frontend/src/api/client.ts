@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// local: '/api' (proxy do vite) · docker/prod: VITE_API_URL aponta direto para a api
+// local: '/api' (proxy do vite) - docker: VITE_API_URL aponta direto para a api
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
 });

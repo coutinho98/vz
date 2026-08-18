@@ -101,10 +101,8 @@ export type BadgeTone =
   | 'secondary'
   | 'outline'
   | 'destructive'
-  // tons semânticos remapeados para o kit
   | 'success'
   | 'warning'
-  // aliases legados
   | 'zinc'
   | 'amber'
   | 'green'
