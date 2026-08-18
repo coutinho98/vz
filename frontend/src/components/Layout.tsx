@@ -1,13 +1,12 @@
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { Button } from '@/components/ui/button';
+import logoUrl from '../blob.svg';
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2.5">
-      <span className="flex size-9 items-center justify-center border-2 border-black bg-primary font-head text-sm shadow-sm">
-        VZ
-      </span>
+    <Link to="/" className="flex shrink-0 items-center gap-2.5">
+      <img src={logoUrl} alt="VZ" className="size-15 object-contain" />
       <span className="font-head text-xl tracking-tight">
         vz<span className="text-primary">.</span>
       </span>
@@ -15,23 +14,30 @@ function Logo() {
   );
 }
 
+const ROLE_LABEL: Record<string, string> = {
+  ORGANIZER: 'Organizador',
+  CUSTOMER: 'Cliente',
+  GATE: 'Portaria',
+};
+
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rounded border-2 px-3 py-1.5 text-sm font-bold transition ${
+    `border-2 px-3 py-1.5 text-sm font-bold transition-all duration-200 ${
       isActive
         ? 'border-black bg-black text-background shadow-sm'
-        : 'border-transparent text-muted-foreground hover:border-black hover:bg-card hover:text-foreground'
+        : 'border-transparent text-muted-foreground hover:-translate-y-0.5 hover:border-black hover:bg-card hover:text-foreground hover:shadow-sm'
     }`;
 
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b-2 border-black bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Logo />
-          <nav className="flex items-center gap-1">
+
+          <nav className="flex items-center gap-1.5" aria-label="Principal">
             {user?.role === 'GATE' ? (
               <NavLink to="/portaria" className={linkClass}>
                 Portaria
@@ -59,19 +65,31 @@ export default function Layout() {
               </>
             )}
           </nav>
+
           {user ? (
-            <div className="flex items-center gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-bold leading-tight">{user.name}</p>
-                <p className="font-mono text-[10px] uppercase leading-tight tracking-widest text-muted-foreground">
-                  {user.role === 'ORGANIZER'
-                    ? 'Organizador'
-                    : user.role === 'GATE'
-                      ? 'Portaria'
-                      : 'Cliente'}
-                </p>
+            <div className="flex shrink-0 items-center gap-3">
+              <div
+                className="hidden items-center gap-2.5 border-2 border-black bg-card px-2.5 py-1 shadow-sm sm:flex"
+                title={`${user.name} · ${ROLE_LABEL[user.role]}`}
+              >
+                <span className="flex size-7 items-center justify-center border-2 border-black bg-primary font-head text-xs">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="text-left leading-tight">
+                  <p className="text-xs font-bold">{user.name.split(' ')[0]}</p>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                    {ROLE_LABEL[user.role]}
+                  </p>
+                </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => { logout(); navigate('/'); }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  logout();
+                  navigate('/');
+                }}
+              >
                 Sair
               </Button>
             </div>
@@ -82,12 +100,9 @@ export default function Layout() {
           )}
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-8 sm:px-4">
         <Outlet />
       </main>
-      <footer className="border-t-2 border-black bg-black py-5 text-center font-mono text-[11px] uppercase tracking-[0.25em] text-background/70">
-        vz · plataforma de eventos e ingressos · teste técnico
-      </footer>
     </div>
   );
 }
