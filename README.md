@@ -1,140 +1,67 @@
 # VZ
 
-Plataforma de eventos e ingressos: organizadores montam eventos a partir de um catálogo
-externo (filmes via TMDB + shows locais), clientes reservam lugares — assentos marcados
-ou pista —, pagam de forma simulada, recebem ingresso com QR Code compartilhável por link
-e a portaria valida a entrada com câmera ou digitação manual.
+Plataforma de eventos e ingressos: organizadores publicam eventos a partir de um catálogo
+externo (filmes via TMDB + shows locais), clientes reservam assentos ou pista, pagam de
+forma simulada e recebem ingressos com QR Code; a portaria valida a entrada com câmera
+ou digitação manual.
 
 ## Stack
 
-| Camada   | Tecnologia                               |
-| -------- | ---------------------------------------- |
-| Frontend | React 19 + Vite + TypeScript + Tailwind 4 + NeoBrutalism kit |
-| Backend  | NestJS 11 + TypeScript + Prisma 7 + PostgreSQL 16 |
-| Tempo real | Redis 7 (holds de assento com TTL + keyspace events) + SSE |
-| Catálogo | [TMDB](https://www.themoviedb.org/) (filmes) + catálogo de shows local |
-
-## Estrutura
-
-```
-vz/
-├── backend/
-│   └── src/
-│       ├── auth/          # JWT, papéis (organizador/cliente), guards
-│       ├── catalog/       # TMDB com fallback offline + shows locais
-│       ├── events/        # CRUD, publicação, mapa de assentos, disponibilidade
-│       ├── reservations/  # bloqueio atômico de assentos/pista (hold de 10 min)
-│       ├── payments/      # pagamento simulado (aprovação e recusa)
-│       ├── tickets/       # emissão, código único, consulta pública p/ link
-│       └── gate/          # validação na portaria (válido/inválido/já usado/evento errado)
-└── frontend/
-    └── src/
-        ├── api/           # cliente axios + tipos do domínio
-        ├── auth/          # contexto de autenticação
-        ├── components/    # layout, cards, mapa de assentos, UI kit
-        └── pages/         # explorar, detalhe, checkout, ingressos, organizador, portaria
-```
+- **Frontend**: React + Vite + TypeScript + Tailwind (kit NeoBrutalism)
+- **Backend**: NestJS + Prisma + PostgreSQL
+- **Extras**: Redis (opcional, locks de assento e tempo real via SSE) e TMDB para o catálogo de filmes
 
 ## Como rodar
 
-### Opção 1 — Docker (tudo em containers)
+### Docker
 
 ```bash
 docker compose up --build
-# api:    http://localhost:3000
-# web:    http://localhost:5173
-# banco:  localhost:5432 (postgres 16)
-
-# popular o banco com dados de demonstração (uma vez):
-docker compose exec api npx tsx prisma/seed.ts
+# api:   http://localhost:3000
+# web:   http://localhost:5173
+docker compose exec api npx tsx prisma/seed.ts   # dados de demonstração (uma vez)
 ```
 
-### Opção 2 — Local (Postgres nativo)
+### Local
 
-> Requisitos: Node.js 20+, npm e PostgreSQL 16 rodando em `localhost:5432`.
+> Requisitos: Node 20+, PostgreSQL 16 em `localhost:5432`. Redis é opcional.
 
 ```bash
-# 1. banco (uma vez)
 sudo -u postgres psql -c "CREATE USER vz WITH PASSWORD 'vz' CREATEDB;"
 sudo -u postgres psql -c "CREATE DATABASE vz OWNER vz;"
 
-# 2. dependências
 npm run install:all
+cp backend/.env.example backend/.env   # TMDB_API_KEY e REDIS_URL são opcionais
 
-# 3. configurar o backend
-cp backend/.env.example backend/.env   # ajuste TMDB_API_KEY se quiser catálogo real (opcional)
-
-# 4. migrations + seed
 npm --prefix backend run migrate
 npm --prefix backend run seed
 
-# 5. subir as aplicações (terminais separados)
-npm run dev:api    # http://localhost:3000
-npm run dev:web    # http://localhost:5173 (proxy /api -> :3000)
+npm run dev:api   # http://localhost:3000
+npm run dev:web   # http://localhost:5173
 ```
 
-### Contas de demonstração (seed)
+### Contas de demonstração (senha `123456`)
 
-| Papel       | E-mail                     | Senha   |
-| ----------- | -------------------------- | ------- |
-| Organizador | organizador@vz.com   | 123456  |
-| Cliente     | cliente@vz.com       | 123456  |
+organizador@vz.com, cliente@vz.com, cliente2@vz.com e portaria@vz.com
 
-## Fluxos implementados
+### Cartões de teste (padrão Stripe)
 
-### Organizador
-- Cria eventos a partir do catálogo (filmes TMDB *em cartaz*/busca ou shows locais),
-  definindo data, local, preço e formato do espaço.
-- Espaços **assentados** (cinema/teatro: fileiras × assentos, com mapa) ou **pista**
-  (capacidade total).
-- Gerencia eventos: publicar (rascunho → publicado), cancelar (libera pendências e
-  invalida ingressos), editar rascunhos.
-- Portaria própria por evento.
+Aprova: 4242 4242 4242 4242 (ou qualquer outro número válido). Recusam:
+4000 0000 0000 0002 (card_declined), ...9995 (saldo insuficiente),
+...9987 (cartão perdido), ...0069 (expirado) e ...0127 (CVV incorreto).
 
-### Cliente
-- Navega e busca eventos publicados (título, casa ou cidade), filtrando por categoria.
-- Reserva com **mapa de assentos** interativo ou **quantidade** (pista, até 10).
-  A reserva bloqueia os lugares por **10 minutos** (expiração automática no servidor).
-- **Pagamento simulado**: qualquer cartão é aprovado; números terminados em `0002`
-  são recusados e a reserva continua válida para nova tentativa.
-- **Meus ingressos** com QR Code (conteúdo = link público `/t/CODIGO`),
-  compartilhável por link, com estado (válido/utilizado/cancelado).
+## Limitações e observações
 
-### Portaria (organizador)
-- Validação com **retorno claro e colorido**:
-  - ✅ **Válido** — entrada liberada (marca como utilizado);
-  - ⚠️ **Já utilizado** — com data/hora do check-in;
-  - ❌ **Inválido** — código inexistente, **evento errado** (informa o evento correto)
-    ou cancelado.
-- Leitura do QR **pela câmera** (html5-qrcode, aceita o link ou o código puro) +
-  **digitação manual** como alternativa.
-
-## Decisões técnicas
-
-- **Hold de assentos com Redis**: ao reservar, um script Lua conquista o lock
-  de *todos* os assentos de uma vez (`SET ... NX EX`, all-or-nothing) com TTL
-  de 10 min. Sem Redis (`REDIS_URL` vazio) o sistema cai para o modo
-  somente-Postgres — o `UPDATE ... WHERE reservation_id IS NULL` condicional
-  dentro da transação continua garantindo a anti-venda-dupla.
-- **Expiração orientada a evento**: `notify-keyspace-events Ex` avisa quando o
-  hold vence; a API varre a reserva correspondente no Postgres, libera os
-  assentos e notifica via SSE — sem cron.
-- **Mapa em tempo real (SSE)**: `GET /events/:id/seats/stream` transmite
-  `seats-updated` para quem tem o mapa aberto; o front invalida o cache e
-  refaz o `GET` (heartbeat de 25s mantém a conexão viva).
-- **Concorrência de assentos**: transação com `updateMany` condicional
-  (`reservationId IS NULL`) — dois clientes disputando o mesmo lugar recebem `409`.
-- **TMDB opcional**: sem `TMDB_API_KEY` a API usa catálogo local de fallback, mantendo o
-  fluxo completo funcionando offline.
-- **QR Code**: o backend emite apenas o código (`ING-XXXXX-XXXXX`); o QR é renderizado no
-  front (`qrcode.react`) apontando para o link público do ingresso — o mesmo QR funciona
-  em qualquer leitor.
-- **IDs UUID** para validação de rota via `ParseUUIDPipe`.
-
-## Scripts úteis
-
-```bash
-npm run build:api && npm run build:web   # builds de produção
-npm --prefix backend run seed            # reseta e popula o banco
-npm --prefix backend run start:prod      # API via dist
-```
+- **Chave TMDB**: não está no repositório (enviada separadamente). Sem ela, o
+  catálogo usa um fallback local - todo o fluxo funciona, apenas sem os dados
+  reais do TMDB.
+- **Câmera da portaria**: requer HTTPS ou localhost (regra de `getUserMedia` nos
+  navegadores). Em HTTP, use a digitação manual.
+- **Redis opcional**: sem `REDIS_URL` todas as garantias se mantêm, mas sem o mapa
+  em tempo real e sem a recusa instantânea de assentos.
+- **Pagamento simulado**: não há integração real com a Stripe.
+- **Registro de papéis aberto**: qualquer um cria conta de qualquer papel; em
+  produção, portaria seria por convite do organizador.
+- **Sem testes automatizados**: a validação foi feita por scripts contra a API em
+  execução (fluxos completos, concorrência de assentos e de check-in).
+- **Deploy free (Render)**: cold start de ~30-60s após inatividade.
