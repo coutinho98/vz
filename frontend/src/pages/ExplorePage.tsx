@@ -86,7 +86,7 @@ export default function ExplorePage() {
               Nenhum evento encontrado para esta busca.
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="-mx-1 grid grid-cols-1 gap-6 px-1 sm:mx-0 sm:grid-cols-2 sm:px-0">
               {data.items.map((event) => (
                 <EventCard key={event.id} event={event} />
               ))}

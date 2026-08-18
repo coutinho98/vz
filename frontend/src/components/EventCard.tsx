@@ -5,7 +5,7 @@ import { formatBRL } from '../api/client';
 import { Badge, Poster } from './ui';
 import { Card, CardContent } from '@/components/ui/card';
 
-const LOW_STOCK_THRESHOLD = 25;
+const LOW_STOCK_THRESHOLD = 20;
 
 export default function EventCard({ event }: { event: EventItem }) {
   const start = new Date(event.startsAt);
@@ -31,11 +31,11 @@ export default function EventCard({ event }: { event: EventItem }) {
       to={`/eventos/${event.id}`}
       className="group block h-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
     >
-      <Card className="relative h-full p-0 transition-all duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-lg">
+      <Card className="relative h-full overflow-hidden p-0 transition-all duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-lg">
         <div className="flex h-full">
           {/* pôster com perfuração de ingresso no lado direito */}
           <div
-            className={`relative w-28 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-36 ${
+            className={`relative w-24 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-36 ${
               soldOut ? 'grayscale' : ''
             }`}
           >
@@ -47,9 +47,9 @@ export default function EventCard({ event }: { event: EventItem }) {
             />
 
             {/* selo de data estilo calendário */}
-            <div className="absolute left-1.5 top-1.5 flex size-11 flex-col items-center justify-center border-2 border-black bg-primary text-primary-foreground shadow-sm sm:size-12">
-              <span className="font-head text-base leading-none sm:text-lg">{day}</span>
-              <span className="font-mono text-[9px] font-bold uppercase tracking-widest">
+            <div className="absolute left-1 top-1 flex size-10 flex-col items-center justify-center border-2 border-black bg-primary text-primary-foreground shadow-sm sm:left-1.5 sm:top-1.5 sm:size-12">
+              <span className="font-head text-sm leading-none sm:text-lg">{day}</span>
+              <span className="font-mono text-[8px] font-bold uppercase tracking-widest sm:text-[9px]">
                 {month}
               </span>
             </div>
@@ -66,11 +66,11 @@ export default function EventCard({ event }: { event: EventItem }) {
           {/* recortes semicirculares da perfuração */}
           <span
             aria-hidden
-            className="absolute left-28 top-0 z-10 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
+            className="absolute left-24 top-0 z-10 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
           />
           <span
             aria-hidden
-            className="absolute bottom-0 left-28 z-10 size-5 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
+            className="absolute bottom-0 left-24 z-10 size-5 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
           />
 
           <CardContent className="flex min-w-0 flex-1 flex-col gap-1.5 py-3">
@@ -92,7 +92,7 @@ export default function EventCard({ event }: { event: EventItem }) {
               </span>
             </p>
 
-            <div className="mt-auto flex items-end justify-between gap-3 border-t-2 border-dashed border-black/25 pt-2">
+            <div className="mt-auto flex flex-wrap items-end justify-between gap-x-3 gap-y-2 border-t-2 border-dashed border-black/25 pt-2">
               <div className="min-w-0 space-y-1">
                 {event.sessionCount && event.sessionCount > 1 ? (
                   <>
@@ -100,7 +100,7 @@ export default function EventCard({ event }: { event: EventItem }) {
                       Em cartaz · {event.sessionCount} sessões
                     </p>
                     <div className="flex flex-wrap gap-1">
-                      {event.sessions?.slice(0, 3).map((s) => (
+                      {event.sessions?.slice(0, 2).map((s) => (
                         <span
                           key={s.id}
                           className="border-2 border-black bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold"
@@ -115,9 +115,9 @@ export default function EventCard({ event }: { event: EventItem }) {
                             .replace('.', '')}
                         </span>
                       ))}
-                      {(event.sessionCount ?? 0) > 3 && (
+                      {(event.sessionCount ?? 0) > 2 && (
                         <span className="self-center font-mono text-[10px] text-muted-foreground">
-                          +{(event.sessionCount ?? 0) - 3} horários
+                          +{(event.sessionCount ?? 0) - 2} horários
                         </span>
                       )}
                     </div>
@@ -127,25 +127,17 @@ export default function EventCard({ event }: { event: EventItem }) {
                     {weekday} {day} {month.toLowerCase()} · {time}
                   </p>
                 )}
-                {event.availability && (
+                {event.availability && (soldOut || lowStock) && (
                   <p
-                    className={`font-mono text-[11px] uppercase tracking-wide ${
-                      soldOut
-                        ? 'font-bold text-destructive'
-                        : lowStock
-                          ? 'font-bold text-foreground'
-                          : 'text-muted-foreground'
+                    className={`font-mono text-[11px] font-bold uppercase tracking-wide ${
+                      soldOut ? 'text-destructive' : 'text-foreground'
                     }`}
                   >
-                    {soldOut
-                      ? 'Esgotado'
-                      : lowStock
-                        ? `Últimos ${available} ingressos`
-                        : `${available} disponíveis`}
+                    {soldOut ? 'Esgotado' : `Últimos ${available} ingressos`}
                   </p>
                 )}
               </div>
-              <span className="shrink-0 border-2 border-black bg-primary px-2.5 py-1 font-head text-sm shadow-sm transition-colors duration-200 group-hover:bg-primary-hover">
+              <span className="shrink-0 border-2 border-black bg-primary px-2 py-0.5 font-head text-xs shadow-sm transition-colors duration-200 group-hover:bg-primary-hover sm:px-2.5 sm:py-1 sm:text-sm">
                 {formatBRL(event.priceCents)}
               </span>
             </div>
