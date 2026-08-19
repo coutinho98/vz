@@ -16,7 +16,7 @@ import { Spinner } from './components/ui';
 
 const GateCheckPage = lazy(() => import('./pages/gate/GateCheckPage'));
 
-/** Usuário de portaria só tem um trabalho: validar ingressos. */
+// se for portaria, joga direto pra /portaria
 function GateHome() {
   const { user, loading } = useAuth();
   if (loading) return <Spinner label="Carregando…" />;

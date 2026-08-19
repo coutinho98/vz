@@ -1,10 +1,6 @@
 import { useMemo } from 'react';
 import type { SeatMap } from '../api/types';
 
-/**
- * O topo do mapa conversa com o cliente no vocabulário do evento:
- * cinema vê TELA, show vê PALCO com holofotes.
- */
 function StageHeader({ category }: { category: SeatMap['category'] }) {
   if (category === 'MOVIE') {
     return (

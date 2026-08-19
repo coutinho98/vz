@@ -109,7 +109,7 @@ export class PaymentsService {
     });
 
     const tickets = await this.ticketsService.issueForReservation(reservation);
-    // posse definitiva: o lock efêmero sai do Redis, o Postgres manda agora
+    // libera o lock temporário do redis já que tá confirmado no banco
     await this.hold.release(
       reservation.eventId,
       reservation.seats.map((s) => s.id),

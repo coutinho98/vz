@@ -32,40 +32,53 @@ function daysFromNow(days: number, hour = 21) {
 }
 
 async function main() {
-  await prisma.ticket.deleteMany();
-  await prisma.payment.deleteMany();
-  await prisma.seat.deleteMany();
-  await prisma.reservation.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.user.deleteMany();
+  try {
+    await prisma.$executeRawUnsafe(
+      `UPDATE "Event" SET "title" = REPLACE("title", '—', '-') WHERE "title" LIKE '%—%'`,
+    );
+  } catch {}
+
+  const eventCount = await prisma.event.count();
+  if (eventCount > 0) {
+    console.log(`Banco de dados já contém ${eventCount} eventos. Pulando seed.`);
+    return;
+  }
 
   const [organizer, customer, customer2, gate] = await Promise.all([
-    prisma.user.create({
-      data: {
+    prisma.user.upsert({
+      where: { email: 'organizador@vz.com' },
+      update: {},
+      create: {
         name: 'Maria Organizadora',
         email: 'organizador@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'ORGANIZER',
       },
     }),
-    prisma.user.create({
-      data: {
+    prisma.user.upsert({
+      where: { email: 'cliente@vz.com' },
+      update: {},
+      create: {
         name: 'João Cliente',
         email: 'cliente@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'CUSTOMER',
       },
     }),
-    prisma.user.create({
-      data: {
+    prisma.user.upsert({
+      where: { email: 'cliente2@vz.com' },
+      update: {},
+      create: {
         name: 'Carla Cliente',
         email: 'cliente2@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'CUSTOMER',
       },
     }),
-    prisma.user.create({
-      data: {
+    prisma.user.upsert({
+      where: { email: 'portaria@vz.com' },
+      update: {},
+      create: {
         name: 'Pablo Portaria',
         email: 'portaria@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
@@ -74,6 +87,7 @@ async function main() {
     }),
   ]);
   void gate;
+  void customer2;
 
   const seats = (rows: number, perRow: number) => {
     const data: { row: string; number: number }[] = [];
@@ -107,7 +121,7 @@ async function main() {
       organizerId: organizer.id,
       category: 'SHOW',
       catalogRef: 'show-coldplay',
-      title: 'Coldplay — Music of the Spheres',
+      title: 'Coldplay - Music of the Spheres',
       description:
         'Palco imersivo, pulseras luminosas e os maiores hits da banda em uma produção hipnótica.',
       venue: 'Allianz Parque',
@@ -123,7 +137,7 @@ async function main() {
       organizerId: organizer.id,
       category: 'SHOW',
       catalogRef: 'show-ludmilla',
-      title: 'Ludmilla — Numanice Tour',
+      title: 'Ludmilla - Numanice Tour',
       description:
         'A rainha do funk em turnê pelos maiores estádios do país, com produção grandiosa e hits que dominaram as paradas.',
       venue: 'Estádio Nilton Santos',
@@ -138,7 +152,7 @@ async function main() {
       organizerId: organizer.id,
       category: 'MOVIE',
       catalogRef: 'movie-interstellar',
-      title: 'Interstellar — Sessão Vibe',
+      title: 'Interstellar - Sessão Vibe',
       description:
         'Clássico da ficção científica em exibição comentada com trilha ao vivo de sintetizadores.',
       venue: 'Cine Vila Lobos',
@@ -155,7 +169,7 @@ async function main() {
       organizerId: organizer.id,
       category: 'SHOW',
       catalogRef: 'show-gil',
-      title: 'Gilberto Gil — Acústico',
+      title: 'Gilberto Gil - Acústico',
       description:
         'O mestre da música brasileira em um show intimista: voz, violão e a história da MPB.',
       venue: 'Theatro Municipal',
@@ -171,7 +185,7 @@ async function main() {
       organizerId: organizer.id,
       category: 'SHOW',
       catalogRef: 'show-dj-avenue',
-      title: 'Alok — Festival Avenue',
+      title: 'Alok - Festival Avenue',
       description: 'Set especial de 3 horas com convidados surpresa e o melhor do eletrônico mundial.',
       venue: 'Autódromo de Interlagos',
       city: 'São Paulo',

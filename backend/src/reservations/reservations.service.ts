@@ -17,12 +17,10 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 
 const HOLD_SECONDS = Number(process.env.RESERVATION_HOLD_SECONDS ?? 600);
 
-/** preço unitário da meia-entrada (arredondado para centavos) */
 export function halfPriceOf(priceCents: number) {
   return Math.round(priceCents / 2);
 }
 
-/** total = inteiras + meias — única fonte de verdade, usada também no front via API */
 export function reservationTotal(
   priceCents: number,
   count: number,
@@ -43,12 +41,8 @@ export class ReservationsService implements OnModuleInit {
     private redisService: RedisService,
   ) {}
 
-  /**
-   * Keyspace notifications do Redis: quando um hold expira sozinho, a
-   * reserva PENDING correspondente já venceu (mesmo TTL) — varre, libera
-   * os assentos no banco e avisa quem está olhando o mapa via SSE.
-   */
   onModuleInit() {
+    // escuta expirações do redis pra liberar assentos vencidos e avisar no sse
     this.redisService.keyExpired$.subscribe((key) => {
       const eventId = SeatsHoldService.eventIdFromKey(key);
       if (!eventId) return;
@@ -105,7 +99,7 @@ export class ReservationsService implements OnModuleInit {
     seatIds: string[],
     halfCount: number,
   ) {
-    // 1. lock efêmero no Redis (all-or-nothing via Lua) — recusa imediata
+    // tenta lock rapido no redis primeiro
     const reservationId = randomUUID();
     const locked = await this.hold.hold(
       eventId,
@@ -120,7 +114,7 @@ export class ReservationsService implements OnModuleInit {
     }
 
     try {
-      // 2. posse provisória no Postgres (rede de segurança p/ modo sem Redis)
+      // reserva no banco com update condicional (row-lock)
       const reservation = await this.prisma.$transaction(async (tx) => {
         const reservation = await tx.reservation.create({
           data: {
@@ -160,7 +154,7 @@ export class ReservationsService implements OnModuleInit {
       this.broadcast.broadcast(eventId);
       return reservation;
     } catch (err) {
-      // compensação: devolve os locks que não viraram reserva
+      // se deu erro no postgres, limpa o lock do redis
       await this.hold.release(eventId, seatIds);
       throw err;
     }

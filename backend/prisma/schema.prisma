@@ -70,7 +70,7 @@ model Reservation {
   event      Event     @relation(fields: [eventId], references: [id])
   status     String    @default("PENDING") // PENDING | CONFIRMED | CANCELLED
   quantity   Int       @default(0) // ingressos pista (STANDING)
-  halfCount  Int       @default(0) // quantos ingressos são meia-entrada
+  halfCount  Int       @default(0) // quantos ingressos são meia
   totalCents Int
   expiresAt  DateTime
   createdAt  DateTime  @default(now())

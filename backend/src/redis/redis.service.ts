@@ -7,17 +7,13 @@ import {
 import { Subject } from 'rxjs';
 import Redis from 'ioredis';
 
-/**
- * Conexão Redis opcional: sem REDIS_URL o sistema opera em modo
- * somente-Postgres (locks condicionais já garantem a anti-venda-dupla).
- */
+// redis opcional: se não tiver REDIS_URL, roda só no postgres
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
   private client: Redis | null = null;
   private subscriber: Redis | null = null;
 
-  /** emite a chave completa de cada evento de expiração (notify-keyspace-events Ex) */
   readonly keyExpired$ = new Subject<string>();
 
   get enabled() {

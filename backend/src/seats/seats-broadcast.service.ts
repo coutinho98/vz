@@ -5,10 +5,7 @@ export interface SeatUpdateEvent {
   type: 'seats-updated';
 }
 
-/**
- * Salas SSE por evento: quem tem o mapa de assentos aberto assina a sala
- * e recebe um aviso quando o mapa muda (hold, confirmação, expiração…).
- */
+// salas sse por evento
 @Injectable()
 export class SeatsBroadcastService {
   private readonly logger = new Logger(SeatsBroadcastService.name);

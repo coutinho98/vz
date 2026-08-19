@@ -57,8 +57,7 @@ export class TicketsService {
       });
     }
 
-    // pista: um ingresso individual por pessoa — cada um tem código/QR
-    // próprio e é validado de forma independente na entrada
+    // pista: gera 1 ingresso por pessoa pra cada um ter seu próprio QR
     return this.prisma.ticket.createManyAndReturn({
       data: Array.from({ length: reservation.quantity }, (_, i) => ({
         code: generateTicketCode(),

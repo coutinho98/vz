@@ -41,12 +41,10 @@ export class CreateEventDto {
   @MinLength(2)
   city: string;
 
-  /** compat: data única (equivale a sessionsAt com um item) */
   @IsOptional()
   @IsISO8601()
   startsAt?: string;
 
-  /** cinema: múltiplas sessões do mesmo filme, cada uma vira um evento */
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)

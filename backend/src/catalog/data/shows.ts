@@ -4,7 +4,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-ludmilla',
     category: 'SHOW',
-    title: 'Ludmilla — Numanice Tour',
+    title: 'Ludmilla - Numanice Tour',
     description:
       'A rainha do funk em turnê pelos maiores estádios do país, com produção grandiosa e hits que dominaram as paradas.',
     posterUrl: null,
@@ -14,7 +14,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-metallica',
     category: 'SHOW',
-    title: 'Metallica — M72 World Tour',
+    title: 'Metallica - M72 World Tour',
     description:
       'Palco circular, setlist de quatro décadas e o heavy metal mais imponente já visto ao vivo.',
     posterUrl: null,
@@ -24,7 +24,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-gil',
     category: 'SHOW',
-    title: 'Gilberto Gil — Acústico',
+    title: 'Gilberto Gil - Acústico',
     description:
       'O mestre da música brasileira em um show intimista voz, violão e a história da MPB.',
     posterUrl: null,
@@ -34,7 +34,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-beyonce',
     category: 'SHOW',
-    title: 'Beyoncé — Renaissance',
+    title: 'Beyoncé - Renaissance',
     description: 'Turnê celebrando o álbum Renaissance: balada, house e uma produção visual hipnótica.',
     posterUrl: null,
     releaseYear: 2026,
@@ -43,7 +43,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-legiao',
     category: 'SHOW',
-    title: 'Legião Urbana — Holograma',
+    title: 'Legião Urbana - Holograma',
     description: 'Experiência holográfica que revive os clássicos da maior banda do rock nacional.',
     posterUrl: null,
     releaseYear: 2026,
@@ -52,7 +52,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-anitta',
     category: 'SHOW',
-    title: 'Anitta — Funk Generation',
+    title: 'Anitta - Funk Generation',
     description: 'O funk brasileiro conquistando o mundo com coreografias e produção de arena.',
     posterUrl: null,
     releaseYear: 2026,
@@ -61,7 +61,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-coldplay',
     category: 'SHOW',
-    title: 'Coldplay — Music of the Spheres',
+    title: 'Coldplay - Music of the Spheres',
     description: 'Pulseras luminosas, hits universais e o show mais sustentável do planeta.',
     posterUrl: null,
     releaseYear: 2026,
@@ -70,7 +70,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-elba',
     category: 'SHOW',
-    title: 'Elba Ramalho — Forró Rainha',
+    title: 'Elba Ramalho - Forró Rainha',
     description: 'A rainha do forró com sanfona, zabumba e energia nordestina contagiante.',
     posterUrl: null,
     releaseYear: 2026,
@@ -79,7 +79,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-tim',
     category: 'SHOW',
-    title: 'Tim Maiz — Tribute Jazz',
+    title: 'Tim Maiz - Tribute Jazz',
     description: 'Releitura jazzística dos clássicos eternos de Tim Maia em casa de espetáculo intimista.',
     posterUrl: null,
     releaseYear: 2026,
@@ -88,7 +88,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-dj-avenue',
     category: 'SHOW',
-    title: 'Alok — Festival Avenue',
+    title: 'Alok - Festival Avenue',
     description: 'Set especial de 3 horas com convidados surpresa e o melhor do eletrônico mundial.',
     posterUrl: null,
     releaseYear: 2026,
@@ -97,7 +97,7 @@ export const SHOWS: CatalogItem[] = [
   {
     ref: 'show-marisa',
     category: 'SHOW',
-    title: 'Marisa Monte — Verdade, Uma Ilusão',
+    title: 'Marisa Monte - Verdade, Uma Ilusão',
     description: 'A voz mais doce da MPB em turnê com repertório renovado e banda enxuta.',
     posterUrl: null,
     releaseYear: 2026,

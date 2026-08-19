@@ -29,10 +29,7 @@ export class GateService {
     private eventsService: EventsService,
   ) {}
 
-  /**
-   * Portaria (GATE) valida qualquer evento publicado;
-   * organizador valida apenas os próprios eventos.
-   */
+  // portaria valida tudo; organizador só os eventos dele
   async listEvents(user: AuthUser) {
     if (user.role === 'GATE') {
       return this.prisma.event.findMany({
@@ -90,8 +87,7 @@ export class GateService {
       };
     }
 
-    // update atômico: só marca USED se ainda estiver VALID — duas
-    // leituras simultâneas não podem validar o mesmo ingresso duas vezes
+    // update condicional atômico: se duas catracas baterem juntas, só uma atualiza
     const claimed = await this.prisma.ticket.updateMany({
       where: { id: ticket.id, status: 'VALID' },
       data: { status: 'USED', checkedInAt: new Date() },

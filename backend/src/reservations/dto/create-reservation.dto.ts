@@ -27,7 +27,6 @@ export class CreateReservationDto {
   @Max(10)
   quantity?: number;
 
-  /** quantos ingressos são meia-entrada (estudante/60+/PCD) */
   @IsOptional()
   @Type(() => Number)
   @IsInt()

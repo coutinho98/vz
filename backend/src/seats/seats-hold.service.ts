@@ -4,10 +4,7 @@ import { RedisService } from '../redis/redis.service';
 const HOLD_KEY = (eventId: string, seatId: string) =>
   `seat:hold:${eventId}:${seatId}`;
 
-/**
- * Ou segura TODOS os assentos, ou nenhum (all-or-nothing).
- * KEYS = chaves dos assentos · ARGV[1] = reservationId · ARGV[2] = ttl segundos
- */
+// trava todos os assentos juntos; se 1 falhar, não trava nenhum (all-or-nothing)
 const HOLD_LUA = `
 for i = 1, #KEYS do
   if redis.call('EXISTS', KEYS[i]) == 1 then return 0 end
@@ -24,10 +21,7 @@ export class SeatsHoldService {
 
   constructor(private redisService: RedisService) {}
 
-  /**
-   * Tenta conquistar o lock efêmero de todos os assentos de uma vez.
-   * Retorna false se algum já estiver segurado. No-op sem Redis.
-   */
+  // tenta lock de todos os assentos no redis
   async hold(
     eventId: string,
     seatIds: string[],
@@ -48,7 +42,7 @@ export class SeatsHoldService {
     return result === 1;
   }
 
-  /** Libera os locks (pagamento confirmado, cancelamento ou compensação). No-op sem Redis. */
+  // limpa locks do redis
   async release(eventId: string, seatIds: string[]): Promise<void> {
     const redis = this.redisService.redis;
     if (!redis || seatIds.length === 0) return;
@@ -56,7 +50,7 @@ export class SeatsHoldService {
     await redis.del(...seatIds.map((id) => HOLD_KEY(eventId, id)));
   }
 
-  /** IDs dos assentos segurados no Redis entre os informados. */
+  // retorna quais assentos estão com lock ativo no redis
   async heldSeatIds(eventId: string, seatIds: string[]): Promise<Set<string>> {
     const redis = this.redisService.redis;
     if (!redis || seatIds.length === 0) return new Set();
@@ -72,7 +66,7 @@ export class SeatsHoldService {
     return held;
   }
 
-  /** Extrai o eventId de uma chave seat:hold:{eventId}:{seatId} expirada. */
+  // pega o eventId da chave seat:hold:{eventId}:{seatId}
   static eventIdFromKey(key: string): string | null {
     const parts = key.split(':');
     if (parts.length !== 4 || parts[0] !== 'seat' || parts[1] !== 'hold') {
