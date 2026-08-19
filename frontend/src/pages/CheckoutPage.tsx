@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, MapPin } from 'lucide-react';
 import type { PayResponse, Reservation } from '../api/types';
 import { api, apiErrorMessage, formatBRL } from '../api/client';
 import { ErrorBox, Poster, Spinner } from '../components/ui';
+import { HoldTimer } from '../components/HoldTimer';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 export default function CheckoutPage() {
   const { reservationId } = useParams<{ reservationId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: reservation, isPending, isError } = useQuery<Reservation>({
     queryKey: ['reservation', reservationId],
@@ -110,12 +112,6 @@ export default function CheckoutPage() {
   const half = reservation.halfCount ?? 0;
   const full = reservation.quantity - half;
 
-  const minutesLeft = Math.max(
-    0,
-    Math.floor((new Date(reservation.expiresAt).getTime() - Date.now()) / 60000),
-  );
-  const urgent = minutesLeft <= 2;
-
   const start = new Date(reservation.event.startsAt);
   const dateLong = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' })
     .format(start)
@@ -128,16 +124,15 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-head text-2xl tracking-tight">Pagamento</h1>
-        <span
-          className={`flex items-center gap-2 border-2 border-black px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-widest shadow-sm ${
-            urgent ? 'animate-pulse bg-destructive text-destructive-foreground' : 'bg-primary'
-          }`}
-        >
-          <span className="size-2 rounded-full border border-current bg-background" aria-hidden />
-          expira em {minutesLeft} min
-        </span>
+        <h1 className="font-head text-2xl tracking-tight">Pagamento & Checkout</h1>
       </div>
+
+      <HoldTimer
+        expiresAt={reservation.expiresAt}
+        onExpire={() => {
+          void queryClient.invalidateQueries({ queryKey: ['reservation', reservationId] });
+        }}
+      />
 
       <div className="grid items-start gap-6 md:grid-cols-2">
         <Card className="relative p-0">
