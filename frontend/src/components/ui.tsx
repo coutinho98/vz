@@ -19,10 +19,7 @@ function posterSeed(alt: string) {
   return Math.abs(hash);
 }
 
-/**
- * Cartaz tipográfico para itens sem imagem (shows): o nome vira o pôster,
- * estilo capa de disco punk/indie. Cores determinísticas pelo título.
- */
+// poster tipográfico pra shows ou itens sem imagem
 function TypographicPoster({ title, genre }: { title: string; genre?: string }) {
   const theme = POSTER_THEMES[posterSeed(title) % POSTER_THEMES.length];
   const words = title.replace(/[—–-]/g, ' ').split(/\s+/).filter(Boolean);

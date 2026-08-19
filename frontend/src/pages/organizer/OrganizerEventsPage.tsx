@@ -13,13 +13,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const sessionFmt = new Intl.DateTimeFormat('pt-BR', {
-  weekday: 'short',
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+function formatSessionDateTime(iso: string) {
+  const d = new Date(iso);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(d).replace('.', '');
+  return `${weekday}, ${day}/${month}/${year} às ${hours}:${minutes}`;
+}
 
 export default function OrganizerEventsPage() {
   const queryClient = useQueryClient();
@@ -107,7 +110,7 @@ export default function OrganizerEventsPage() {
                         {sessions.slice(0, 3).map((s) => (
                           <p key={s.id} className="flex items-center gap-1.5 font-mono text-xs">
                             <span
-                              className={`inline-block size-2 border border-black ${
+                              className={`inline-block size-2 shrink-0 border border-black ${
                                 s.status === 'PUBLISHED'
                                   ? 'bg-green-500'
                                   : s.status === 'DRAFT'
@@ -116,7 +119,21 @@ export default function OrganizerEventsPage() {
                               }`}
                               aria-hidden
                             />
-                            {sessionFmt.format(new Date(s.startsAt)).replace(/\./g, '')}
+                            <span className={s.status === 'CANCELLED' ? 'text-muted-foreground line-through' : ''}>
+                              {formatSessionDateTime(s.startsAt)}
+                            </span>
+                            {s.status === 'PUBLISHED' && (
+                              <button
+                                type="button"
+                                aria-label={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
+                                title={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
+                                disabled={act.isPending}
+                                onClick={() => act.mutate({ ids: [s.id], action: 'cancel' })}
+                                className="flex size-4 cursor-pointer items-center justify-center border border-black bg-card text-[9px] font-bold text-muted-foreground transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
+                              >
+                                ×
+                              </button>
+                            )}
                           </p>
                         ))}
                         {sessions.length > 3 && (
@@ -163,19 +180,21 @@ export default function OrganizerEventsPage() {
                             >
                               Portaria
                             </Button>
-                            <Button
-                              variant="destructive"
-                              size="xs"
-                              disabled={act.isPending}
-                              onClick={() =>
-                                act.mutate({
-                                  ids: published.map((s) => s.id),
-                                  action: 'cancel',
-                                })
-                              }
-                            >
-                              Cancelar {published.length > 1 ? 'todas' : ''}
-                            </Button>
+                            {published.length > 1 && (
+                              <Button
+                                variant="destructive"
+                                size="xs"
+                                disabled={act.isPending}
+                                onClick={() =>
+                                  act.mutate({
+                                    ids: published.map((s) => s.id),
+                                    action: 'cancel',
+                                  })
+                                }
+                              >
+                                Cancelar todas
+                              </Button>
+                            )}
                           </>
                         )}
                         {allPublished && (

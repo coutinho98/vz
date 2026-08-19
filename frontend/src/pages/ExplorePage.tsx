@@ -42,9 +42,9 @@ export default function ExplorePage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="font-head text-3xl tracking-tight">Explorar eventos</h1>
+        <h1 className="font-head text-3xl tracking-tight">Grandes eventos</h1>
         <p className="text-muted-foreground">
-          Filmes em cartaz e shows publicados pelos organizadores.
+          Filmes em cartaz e shows.
         </p>
       </div>
 

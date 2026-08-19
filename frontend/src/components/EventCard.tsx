@@ -33,7 +33,6 @@ export default function EventCard({ event }: { event: EventItem }) {
     >
       <Card className="relative h-full overflow-hidden p-0 transition-all duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-lg">
         <div className="flex h-full">
-          {/* pôster com perfuração de ingresso no lado direito */}
           <div
             className={`relative w-24 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-36 ${
               soldOut ? 'grayscale' : ''
@@ -46,7 +45,6 @@ export default function EventCard({ event }: { event: EventItem }) {
               className="h-full border-0 object-cover"
             />
 
-            {/* selo de data estilo calendário */}
             <div className="absolute left-1 top-1 flex size-10 flex-col items-center justify-center border-2 border-black bg-primary text-primary-foreground shadow-sm sm:left-1.5 sm:top-1.5 sm:size-12">
               <span className="font-head text-sm leading-none sm:text-lg">{day}</span>
               <span className="font-mono text-[8px] font-bold uppercase tracking-widest sm:text-[9px]">
@@ -63,7 +61,6 @@ export default function EventCard({ event }: { event: EventItem }) {
             )}
           </div>
 
-          {/* recortes semicirculares da perfuração */}
           <span
             aria-hidden
             className="absolute left-24 top-0 z-10 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
@@ -92,52 +89,56 @@ export default function EventCard({ event }: { event: EventItem }) {
               </span>
             </p>
 
-            <div className="mt-auto flex flex-wrap items-end justify-between gap-x-3 gap-y-2 border-t-2 border-dashed border-black/25 pt-2">
-              <div className="min-w-0 space-y-1">
-                {event.sessionCount && event.sessionCount > 1 ? (
-                  <>
-                    <p className="font-mono text-[11px] font-bold uppercase tracking-wide">
-                      Em cartaz · {event.sessionCount} sessões
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {event.sessions?.slice(0, 2).map((s) => (
-                        <span
-                          key={s.id}
-                          className="border-2 border-black bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold"
-                        >
-                          {new Intl.DateTimeFormat('pt-BR', {
-                            weekday: 'short',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                            .format(new Date(s.startsAt))
-                            .replace('.', '')}
-                        </span>
-                      ))}
-                      {(event.sessionCount ?? 0) > 2 && (
-                        <span className="self-center font-mono text-[10px] text-muted-foreground">
-                          +{(event.sessionCount ?? 0) - 2} horários
-                        </span>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <p className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+            {event.sessionCount && event.sessionCount > 1 && (
+              <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                <span className="font-mono text-[10px] font-bold uppercase text-muted-foreground">
+                  {event.sessionCount} sessões:
+                </span>
+                {event.sessions?.slice(0, 2).map((s) => (
+                  <span
+                    key={s.id}
+                    className="border border-black bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold"
+                  >
+                    {new Intl.DateTimeFormat('pt-BR', {
+                      weekday: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                      .format(new Date(s.startsAt))
+                      .replace('.', '')}
+                  </span>
+                ))}
+                {(event.sessionCount ?? 0) > 2 && (
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    +{(event.sessionCount ?? 0) - 2}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="mt-auto flex items-center justify-between gap-3 border-t-2 border-dashed border-black/25 pt-2">
+              <div className="min-w-0">
+                {(!event.sessionCount || event.sessionCount <= 1) ? (
+                  <p className="truncate font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
                     {weekday} {day} {month.toLowerCase()} · {time}
+                  </p>
+                ) : (
+                  <p className="truncate font-mono text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Em cartaz
                   </p>
                 )}
                 {event.availability && (soldOut || lowStock) && (
                   <p
-                    className={`font-mono text-[11px] font-bold uppercase tracking-wide ${
+                    className={`font-mono text-[10px] font-bold uppercase tracking-wide ${
                       soldOut ? 'text-destructive' : 'text-foreground'
                     }`}
                   >
-                    {soldOut ? 'Esgotado' : `Últimos ${available} ingressos`}
+                    {soldOut ? 'Esgotado' : `Últimos ${available} un`}
                   </p>
                 )}
               </div>
-              <span className="shrink-0 border-2 border-black bg-primary px-2 py-0.5 font-head text-xs shadow-sm transition-colors duration-200 group-hover:bg-primary-hover sm:px-2.5 sm:py-1 sm:text-sm">
+
+              <span className="shrink-0 border-2 border-black bg-primary px-2.5 py-1 font-head text-xs shadow-sm transition-colors duration-200 group-hover:bg-primary-hover sm:text-sm">
                 {formatBRL(event.priceCents)}
               </span>
             </div>
