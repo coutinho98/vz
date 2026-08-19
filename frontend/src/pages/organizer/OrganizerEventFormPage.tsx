@@ -266,6 +266,17 @@ export default function OrganizerEventFormPage() {
             onSubmit={(e) => {
               e.preventDefault();
               setError(null);
+              if (editing) {
+                create.mutate();
+                return;
+              }
+              const invalid = sessions.filter(
+                (s) => !s || new Date(s).getTime() <= Date.now(),
+              );
+              if (invalid.length > 0) {
+                setError('Remova as sessões com data no passado — não é possível criá-las');
+                return;
+              }
               create.mutate();
             }}
             className="space-y-4"

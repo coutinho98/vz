@@ -229,19 +229,26 @@ export function DatePicker({
                   selectedDate?.getMonth() === month &&
                   selectedDate?.getDate() === dayNum;
                 const isToday = isCurrentMonthToday && today.getDate() === dayNum;
+                // sessao so pode ser criada no futuro (nem hoje: ja comecou)
+                const isPast =
+                  new Date(year, month, dayNum).getTime() <=
+                  new Date().setHours(0, 0, 0, 0);
 
                 return (
                   <button
                     key={dayNum}
                     type="button"
+                    disabled={isPast}
                     onClick={() => handleSelectDay(dayNum)}
                     className={cn(
                       'flex size-9 cursor-pointer items-center justify-center rounded font-mono text-xs font-bold transition-all duration-150',
-                      isSelected
-                        ? 'border-2 border-black bg-primary text-primary-foreground shadow-[2px_2px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5'
-                        : isToday
-                          ? 'border-2 border-dashed border-black bg-accent text-foreground hover:border-solid hover:bg-primary/20'
-                          : 'hover:border-2 hover:border-black hover:bg-muted text-foreground'
+                      isPast
+                        ? 'cursor-not-allowed text-muted-foreground/30 select-none'
+                        : isSelected
+                          ? 'border-2 border-black bg-primary text-primary-foreground shadow-[2px_2px_0px_0px_#000] -translate-x-0.5 -translate-y-0.5'
+                          : isToday
+                            ? 'border-2 border-dashed border-black bg-accent text-foreground hover:border-solid hover:bg-primary/20'
+                            : 'hover:border-2 hover:border-black hover:bg-muted text-foreground'
                     )}
                   >
                     {dayNum}

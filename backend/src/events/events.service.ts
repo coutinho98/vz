@@ -34,6 +34,12 @@ export class EventsService {
     if (dates.length === 0 || dates.some((d) => Number.isNaN(d.getTime()))) {
       throw new BadRequestException('Informe ao menos uma data de sessão válida');
     }
+    const past = dates.filter((d) => d.getTime() <= Date.now());
+    if (past.length > 0) {
+      throw new BadRequestException(
+        'Não é possível criar sessões no passado — verifique as datas',
+      );
+    }
     const unique = [...new Set(dates.map((d) => d.getTime()))].map(
       (t) => new Date(t),
     );
@@ -312,6 +318,9 @@ export class EventsService {
     const event = await this.getOwnedEvent(user, id);
     if (event.status !== 'DRAFT') {
       throw new BadRequestException('Apenas eventos em rascunho podem ser editados');
+    }
+    if (dto.startsAt && new Date(dto.startsAt).getTime() <= Date.now()) {
+      throw new BadRequestException('A nova data não pode estar no passado');
     }
 
     return this.prisma.event.update({ where: { id }, data: dto });
