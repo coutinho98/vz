@@ -8,6 +8,7 @@ import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeatsHoldService } from '../seats/seats-hold.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
+import { CatalogService } from '../catalog/catalog.service';
 import {
   CreateEventDto,
   QueryEventsDto,
@@ -23,12 +24,9 @@ export class EventsService {
   constructor(
     private prisma: PrismaService,
     private hold: SeatsHoldService,
+    private catalog: CatalogService,
   ) {}
 
-  /**
-   * Cria o evento — ou, para cinema com `sessionsAt`, uma sessão por data
-   * (cada uma com mapa de assentos e ciclo de vida próprios), tudo-ou-nada.
-   */
   async create(user: AuthUser, dto: CreateEventDto) {
     const dates = (dto.sessionsAt?.length ? dto.sessionsAt : [dto.startsAt])
       .filter((d): d is string => !!d)
@@ -96,10 +94,7 @@ export class EventsService {
     return seats;
   }
 
-  /**
-   * Chave de agrupamento: sessões do mesmo filme no mesmo cinema formam
-   * um único cartaz (modelo sessão de cinema). Shows nunca agrupam.
-   */
+  // agrupa sessões de cinema do mesmo filme num cartaz só na vitrine
   private groupKey(event: {
     id: string;
     category: string;
@@ -116,6 +111,7 @@ export class EventsService {
     const page = query.page ?? 1;
     const where: Prisma.EventWhereInput = {
       status: 'PUBLISHED',
+      startsAt: { gt: new Date() }, // esconde eventos passados
       ...(query.category ? { category: query.category } : {}),
       ...(query.city ? { city: { contains: query.city, mode: 'insensitive' } } : {}),
       ...(query.search
@@ -135,7 +131,6 @@ export class EventsService {
       include: { organizer: { select: { name: true } } },
     });
 
-    // agrupa sessões por filme e pagina os grupos (não as sessões)
     const groups = new Map<string, typeof events>();
     for (const event of events) {
       const key = this.groupKey(event);
@@ -195,7 +190,7 @@ export class EventsService {
       const head = sessions[0];
       return {
         ...head,
-        startsAt: sessions[sessions.length - 1].startsAt, // última sessão p/ ordenação
+        startsAt: sessions[sessions.length - 1].startsAt,
         sessionCount: sessions.length,
         sessions: sessions.map((s) => ({
           id: s.id,
@@ -218,12 +213,13 @@ export class EventsService {
 
     const availability = await this.availability(id, event);
 
-    // sessões do mesmo filme (seletor de horários na tela de detalhe)
+    // busca outras sessões do mesmo filme pro seletor de horários
     let sessions = [{ id: event.id, startsAt: event.startsAt }];
     if (event.category === 'MOVIE') {
       sessions = await this.prisma.event.findMany({
         where: {
           status: 'PUBLISHED',
+          startsAt: { gt: new Date() },
           venue: event.venue,
           city: event.city,
           ...(event.catalogRef
@@ -235,7 +231,12 @@ export class EventsService {
       });
     }
 
-    return { ...event, availability, sessionCount: sessions.length, sessions };
+    const trailer = await this.catalog.getTrailer(
+      event.catalogRef ?? undefined,
+      event.title,
+    );
+
+    return { ...event, availability, sessionCount: sessions.length, sessions, trailer };
   }
 
   async availability(
@@ -280,7 +281,7 @@ export class EventsService {
       throw new BadRequestException('Este evento não tem mapa de assentos');
     }
 
-    // assentos segurados no Redis (hold de outra reserva em andamento)
+    // checa holds ativos no redis
     const held = await this.hold.heldSeatIds(
       eventId,
       event.seats.map((s) => s.id),

@@ -1,16 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { CalendarDays, MapPin, Timer } from 'lucide-react';
 import type { EventItem, Reservation, SeatMap } from '../api/types';
 import { api, apiErrorMessage, formatBRL } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Badge, ErrorBox, Poster, Spinner } from '../components/ui';
 import SeatMapPicker from '../components/SeatMapPicker';
+import { TrailerPlayer } from '../components/TrailerPlayer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
+
+const FALLBACK_TRAILERS: Record<string, string> = {
+  'tmdb-969681': 'JfVOs4VSpmA', // Homem-Aranha
+  'tmdb-1481343': '73_1biulkYk', // A Boca do Diabo
+  'tmdb-872585': 'uYPbbksJxIg', // Oppenheimer
+  'movie-oppenheimer': 'uYPbbksJxIg',
+  'movie-duna2': 'Way9Dexny3w',
+  'movie-parasita': '5xH0R_gx3Dc',
+  'movie-interstellar': 'zSWdZVtXT7E',
+  'movie-cidade-de-deus': 'dcUOO4Itgmw',
+  'movie-tudo-em-todo-lugar': 'wxN1T1uxQ2g',
+  'show-coldplay': 'V3ZhpFXzL1g',
+  'show-orquestra': 'Q_k8QZ7x5j4',
+  'show-alok': 'sW8YtF7Gk1U',
+};
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,14 +45,39 @@ export default function EventDetailPage() {
     queryKey: ['seats', id],
     queryFn: async () => (await api.get<SeatMap>(`/events/${id}/seats`)).data,
     enabled: !!id && isSeated,
+    refetchInterval: 10_000,
   });
+
+  const { data: trailer } = useQuery<{ youtubeKey: string | null; title: string | null }>({
+    queryKey: ['trailer', event?.catalogRef, event?.title],
+    queryFn: async () => {
+      if (!event) return { youtubeKey: null, title: null };
+      const params = new URLSearchParams();
+      if (event.catalogRef) params.set('ref', event.catalogRef);
+      if (event.title) params.set('title', event.title);
+      const res = await api.get<{ youtubeKey: string | null; title: string | null }>(
+        `/catalog/trailer?${params.toString()}`
+      );
+      return res.data;
+    },
+    enabled: !!event,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const youtubeKey =
+    event?.trailer?.youtubeKey ||
+    trailer?.youtubeKey ||
+    (event?.catalogRef ? FALLBACK_TRAILERS[event.catalogRef] : null) ||
+    (event?.title?.toLowerCase().includes('homem-aranha') ? 'JfVOs4VSpmA' : null) ||
+    (event?.title?.toLowerCase().includes('boca do diabo') ? '73_1biulkYk' : null) ||
+    (event?.title?.toLowerCase().includes('oppenheimer') ? 'uYPbbksJxIg' : null);
 
   const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
   const [quantity, setQuantity] = useState(1);
   const [halfCount, setHalfCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // tempo real: mapa de assentos atualiza via SSE enquanto a página está aberta
+  // atualiza mapa de assentos via SSE
   useEffect(() => {
     if (!id || !isSeated) return;
     const source = new EventSource(`${API_BASE}/events/${id}/seats/stream`);
@@ -49,7 +91,7 @@ export default function EventDetailPage() {
   }, [id, isSeated, queryClient]);
 
   const ticketCount = isSeated ? selectedSeats.size : quantity;
-  const effectiveHalf = Math.min(halfCount, ticketCount); // não exceder o total
+  const effectiveHalf = Math.min(halfCount, ticketCount);
   const totalCents = useMemo(() => {
     if (!event) return 0;
     const full = ticketCount - effectiveHalf;
@@ -73,7 +115,14 @@ export default function EventDetailPage() {
     onSuccess: (reservation) => {
       navigate(`/checkout/${reservation.id}`);
     },
-    onError: (err) => setError(apiErrorMessage(err)),
+    onError: (err) => {
+      setError(apiErrorMessage(err));
+      // se tomou 409 (alguém pegou antes), limpa seleção e atualiza mapa
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        void queryClient.invalidateQueries({ queryKey: ['seats', id] });
+        setSelectedSeats(new Set());
+      }
+    },
   });
 
   function toggleSeat(seatId: string) {
@@ -139,7 +188,6 @@ export default function EventDetailPage() {
       <section>
         <Card className="relative p-0">
           <div className="flex flex-col sm:flex-row">
-            {/* pôster com perfuração de ingresso */}
             <div
               className={`relative shrink-0 overflow-hidden border-b-2 border-dashed border-black sm:w-52 sm:border-b-0 sm:border-r-2 ${
                 soldOut ? 'grayscale' : ''
@@ -149,7 +197,6 @@ export default function EventDetailPage() {
                 <Poster src={event.posterUrl} alt={event.title} className="border-0" />
               </div>
 
-              {/* selo de data estilo calendário */}
               <div className="absolute left-2 top-2 flex size-12 flex-col items-center justify-center border-2 border-black bg-primary text-primary-foreground shadow-sm">
                 <span className="font-head text-lg leading-none">{day}</span>
                 <span className="font-mono text-[9px] font-bold uppercase tracking-widest">
@@ -166,7 +213,6 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            {/* recortes semicirculares da perfuração */}
             <span
               aria-hidden
               className="absolute left-52 top-0 z-10 hidden size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:block"
@@ -275,6 +321,15 @@ export default function EventDetailPage() {
           </div>
         </Card>
       </section>
+
+      {youtubeKey && (
+        <section>
+          <TrailerPlayer
+            youtubeKey={youtubeKey}
+            title={event.title}
+          />
+        </section>
+      )}
 
       {user && user.role !== 'CUSTOMER' ? (
         <Card className="border-dashed">
