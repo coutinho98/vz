@@ -230,7 +230,6 @@ export default function EventDetailPage() {
                 <Badge tone="outline">
                   {event.seatingMode === 'SEATED' ? 'Assentos marcados' : 'Pista'}
                 </Badge>
-                {event.organizer && <Badge tone="warning">por {event.organizer.name}</Badge>}
               </div>
 
               <h1 className="font-head text-2xl leading-tight tracking-tight sm:text-3xl">
@@ -295,11 +294,12 @@ export default function EventDetailPage() {
               </div>
 
               <div className="mt-auto flex flex-wrap items-end justify-between gap-3 border-t-2 border-dashed border-black/25 pt-3">
-                <div className="flex items-baseline gap-2">
+                <div className="flex flex-wrap items-center gap-2.5">
                   <span className="border-2 border-black bg-primary px-2.5 py-1 font-head text-xl shadow-sm">
                     {formatBRL(event.priceCents)}
                   </span>
                   <span className="text-xs text-muted-foreground">por ingresso</span>
+                  <TrailerPlayer youtubeKey={youtubeKey} title={event.title} />
                 </div>
                 {event.availability && (
                   <div className="w-full max-w-56 space-y-1 sm:w-48">
@@ -321,15 +321,6 @@ export default function EventDetailPage() {
           </div>
         </Card>
       </section>
-
-      {youtubeKey && (
-        <section>
-          <TrailerPlayer
-            youtubeKey={youtubeKey}
-            title={event.title}
-          />
-        </section>
-      )}
 
       {user && user.role !== 'CUSTOMER' ? (
         <Card className="border-dashed">
