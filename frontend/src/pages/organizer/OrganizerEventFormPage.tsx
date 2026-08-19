@@ -193,8 +193,8 @@ export default function OrganizerEventFormPage() {
                   ({category === 'MOVIE' ? 'TMDB' : 'shows'})
                 </span>
               </h2>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1 rounded border-2 border-black bg-card p-0.5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex gap-1 self-start rounded border-2 border-black bg-card p-0.5">
                   {(['MOVIE', 'SHOW'] as const).map((c) => (
                     <Button
                       key={c}
@@ -213,7 +213,7 @@ export default function OrganizerEventFormPage() {
                   value={catalogSearch}
                   onChange={(e) => setCatalogSearch(e.target.value)}
                   placeholder="Buscar…"
-                  className="w-40"
+                  className="w-full sm:w-40"
                 />
               </div>
             </div>
@@ -338,10 +338,11 @@ export default function OrganizerEventFormPage() {
                   <div className="space-y-2">
                     {sessions.map((value, index) => (
                       <div key={index} className="space-y-1">
-                        <div className="flex gap-2">
+                        <div className="flex items-stretch gap-2">
                           <DatePicker
                             value={value}
                             required
+                            className="min-w-0 flex-1"
                             onChange={(val) =>
                               setSessions((prev) =>
                                 prev.map((v, i) => (i === index ? val : v)),
@@ -354,6 +355,7 @@ export default function OrganizerEventFormPage() {
                               variant="outline"
                               size="icon-sm"
                               aria-label="Remover sessão"
+                              className="shrink-0 self-center"
                               onClick={() =>
                                 setSessions((prev) => prev.filter((_, i) => i !== index))
                               }
@@ -395,7 +397,7 @@ export default function OrganizerEventFormPage() {
               <>
                 <div className="space-y-1.5">
                   <Label>Formato do espaço</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {(
                       [
                         { mode: 'SEATED', title: 'Assentos marcados', hint: 'Cinema / teatro com mapa' },
@@ -419,7 +421,7 @@ export default function OrganizerEventFormPage() {
                 </div>
 
                 {seatingMode === 'SEATED' ? (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="rows">Fileiras (A–Z)</Label>
                       <Input
@@ -433,7 +435,7 @@ export default function OrganizerEventFormPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="perRow">Assentos por fileira</Label>
+                      <Label htmlFor="perRow">Assentos / fileira</Label>
                       <Input
                         id="perRow"
                         type="number"
@@ -463,11 +465,11 @@ export default function OrganizerEventFormPage() {
 
             {error && <ErrorBox message={error} />}
 
-            <div className="flex items-center justify-between border-t-2 border-dashed border-black/30 pt-4">
+            <div className="flex flex-col-reverse gap-3 border-t-2 border-dashed border-black/30 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <Button variant="ghost" type="button" nativeButton={false} render={<Link to="/organizador" />}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={create.isPending}>
+              <Button type="submit" disabled={create.isPending} className="w-full sm:w-auto">
                 {create.isPending
                   ? 'Salvando…'
                   : editing
