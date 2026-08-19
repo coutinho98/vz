@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge as KitBadge } from '@/components/ui/badge';
 import {
   Alert,
@@ -60,6 +61,10 @@ function TypographicPoster({ title, genre }: { title: string; genre?: string }) 
   );
 }
 
+// mesma imagem do tmdb em miniatura (5KB): serve de placeholder borrado
+// enquanto a versao grande (80KB) chega — lqip via cdn, zero dependencias
+const lqipUrl = (url: string) => url.replace('/t/p/w500', '/t/p/w92');
+
 export function Poster({
   src,
   alt,
@@ -71,14 +76,33 @@ export function Poster({
   genre?: string;
   className?: string;
 }) {
+  const [loaded, setLoaded] = useState(false);
+
   if (src) {
     return (
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        className={cn('h-full w-full object-cover', className)}
-      />
+      <div className={cn('relative h-full w-full', className)}>
+        {/* camada borrada de baixo: aparece imediatamente */}
+        <img
+          src={lqipUrl(src)}
+          alt=""
+          aria-hidden
+          className={cn(
+            'absolute inset-0 h-full w-full scale-110 object-cover blur-lg',
+            loaded ? 'opacity-0' : 'opacity-100',
+          )}
+        />
+        {/* imagem real por cima: fade quando carregar */}
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          className={cn(
+            'relative h-full w-full object-cover transition-opacity duration-300',
+            loaded ? 'opacity-100' : 'opacity-0',
+          )}
+        />
+      </div>
     );
   }
   return <TypographicPoster title={alt} genre={genre} />;
