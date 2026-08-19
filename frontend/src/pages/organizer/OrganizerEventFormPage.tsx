@@ -7,6 +7,7 @@ import { Badge, ErrorBox, Poster, Spinner } from '../../components/ui';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -37,23 +38,32 @@ const emptyForm: EventForm = {
   capacity: '500',
 };
 
-const brDateTime = new Intl.DateTimeFormat('pt-BR', {
-  weekday: 'long',
-  day: '2-digit',
-  month: 'long',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+function toLocalDatetimeInput(dateInput: string | Date) {
+  const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  if (Number.isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
 
-/** Confirma em português o que foi escolhido no picker (que segue o idioma do SO). */
 function DateHint({ value }: { value: string }) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);
+  const monthName = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(date);
+
   return (
     <p className="font-mono text-xs text-muted-foreground">
-      → {brDateTime.format(date)}
+      → {weekday}, {day} de {monthName} de {year} às {hours}:{minutes}
     </p>
   );
 }
@@ -86,7 +96,7 @@ export default function OrganizerEventFormPage() {
       posterUrl: event.posterUrl,
       venue: event.venue,
       city: event.city,
-      startsAt: new Date(event.startsAt).toISOString().slice(0, 16),
+      startsAt: toLocalDatetimeInput(event.startsAt),
       price: (event.priceCents / 100).toFixed(2).replace('.', ','),
       rowsCount: String(event.rowsCount ?? 6),
       seatsPerRow: String(event.seatsPerRow ?? 10),
@@ -302,11 +312,9 @@ export default function OrganizerEventFormPage() {
               {editing ? (
                 <div className="space-y-1.5">
                   <Label htmlFor="startsAt">Data e hora</Label>
-                  <Input
-                    id="startsAt"
-                    type="datetime-local"
+                  <DatePicker
                     value={form.startsAt}
-                    onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
+                    onChange={(val) => setForm({ ...form, startsAt: val })}
                     required
                   />
                   <DateHint value={form.startsAt} />
@@ -320,13 +328,12 @@ export default function OrganizerEventFormPage() {
                     {sessions.map((value, index) => (
                       <div key={index} className="space-y-1">
                         <div className="flex gap-2">
-                          <Input
-                            type="datetime-local"
+                          <DatePicker
                             value={value}
                             required
-                            onChange={(e) =>
+                            onChange={(val) =>
                               setSessions((prev) =>
-                                prev.map((v, i) => (i === index ? e.target.value : v)),
+                                prev.map((v, i) => (i === index ? val : v)),
                               )
                             }
                           />
