@@ -8,6 +8,15 @@ export class CatalogController {
   constructor(private catalogService: CatalogService) {}
 
   @Public()
+  @Get('trailer')
+  getTrailer(
+    @Query('ref') ref?: string,
+    @Query('title') title?: string,
+  ) {
+    return this.catalogService.getTrailer(ref, title);
+  }
+
+  @Public()
   @Get()
   find(
     @Query('category') category: CatalogCategory = 'MOVIE',

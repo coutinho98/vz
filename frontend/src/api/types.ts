@@ -60,9 +60,10 @@ export interface EventItem {
   organizer?: { name: string };
   availability?: EventAvailability;
   _count?: { tickets: number; reservations: number };
-  /** sessões do mesmo filme no mesmo cinema (agrupamento estilo cinema) */
   sessionCount?: number;
   sessions?: EventSession[];
+  catalogRef?: string | null;
+  trailer?: { youtubeKey: string | null; title: string | null } | null;
 }
 
 export interface EventsPage {
