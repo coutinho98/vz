@@ -51,9 +51,16 @@ npm run dev:web   # http://localhost:5173
 
 ### Cartões de teste (padrão Stripe)
 
-Aprova: 4242 4242 4242 4242 (ou qualquer outro número válido). Recusam:
-4000 0000 0000 0002 (card_declined), ...9995 (saldo insuficiente),
-...9987 (cartão perdido), ...0069 (expirado) e ...0127 (CVV incorreto).
+Qualquer número válido é aprovado (ex.: 4242 4242 4242 4242). Os abaixo simulam recusas:
+
+| Número | Resultado |
+| --- | --- |
+| `4242 4242 4242 4242` | Aprovado |
+| `4000 0000 0000 0002` | Recusado (`card_declined`) |
+| `4000 0000 0000 9995` | Saldo insuficiente |
+| `4000 0000 0000 9987` | Cartão perdido |
+| `4000 0000 0000 0069` | Cartão expirado |
+| `4000 0000 0000 0127` | CVV incorreto |
 
 ## Limitações e observações
 
