@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Copy, Check, MapPin, QrCode, Barcode, CreditCard } from 'lucide-react';
+import { CalendarDays, Copy, Check, Lock, MapPin, QrCode, Barcode, CreditCard, ShieldCheck } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { PayIntent, PayResponse, Reservation } from '../api/types';
 import { api, apiErrorMessage, formatBRL } from '../api/client';
@@ -153,6 +153,13 @@ export default function CheckoutPage() {
 
   const half = reservation.halfCount ?? 0;
   const full = reservation.quantity - half;
+  // breakdown da nota (mesma conta do backend: meia = preço/2 arredondado)
+  const unitFull = Math.round(
+    reservation.totalCents /
+      (full + half * 0.5 || reservation.quantity),
+  );
+  const intFull = full * unitFull;
+  const intHalf = reservation.totalCents - intFull;
 
   const start = new Date(reservation.event.startsAt);
   const dateLong = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' })
@@ -164,21 +171,59 @@ export default function CheckoutPage() {
   }).format(start);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-head text-2xl tracking-tight">Pagamento & Checkout</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      {/* header com passos do checkout */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground">
+              finalizando compra
+            </p>
+            <h1 className="font-head text-2xl tracking-tight sm:text-3xl">Checkout</h1>
+          </div>
+        </div>
+
+        {/* stepper */}
+        <div className="flex items-center gap-0">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center border-2 border-black bg-primary font-head text-xs shadow-sm">
+              1
+            </span>
+            <span className="font-mono text-xs font-bold uppercase tracking-wide">
+              Reserva
+            </span>
+          </div>
+          <span className="mx-3 h-0.5 flex-1 border-t-2 border-dashed border-black/40" aria-hidden />
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center border-2 border-black bg-primary font-head text-xs shadow-sm">
+              2
+            </span>
+            <span className="font-mono text-xs font-bold uppercase tracking-wide">
+              Pagamento
+            </span>
+          </div>
+          <span className="mx-3 hidden h-0.5 flex-1 border-t-2 border-dashed border-black/40 sm:block" aria-hidden />
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="flex size-7 items-center justify-center border-2 border-dashed border-black/40 bg-card font-head text-xs text-muted-foreground">
+              3
+            </span>
+            <span className="font-mono text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Ingressos
+            </span>
+          </div>
+        </div>
+
+        <HoldTimer
+          expiresAt={reservation.expiresAt}
+          onExpire={() => {
+            void queryClient.invalidateQueries({ queryKey: ['reservation', reservationId] });
+          }}
+        />
       </div>
 
-      <HoldTimer
-        expiresAt={reservation.expiresAt}
-        onExpire={() => {
-          void queryClient.invalidateQueries({ queryKey: ['reservation', reservationId] });
-        }}
-      />
-
-      <div className="grid items-start gap-6 md:grid-cols-2">
-        {/* resumo do pedido */}
-        <div className="space-y-4">
+      <div className="grid items-start gap-6 lg:grid-cols-[3fr_4fr]">
+        {/* resumo do pedido — sticky no desktop */}
+        <div className="space-y-4 lg:sticky lg:top-20">
           <Card className="relative p-0">
             <div className="flex">
               <div className="w-20 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-24">
@@ -199,6 +244,9 @@ export default function CheckoutPage() {
               />
 
               <CardContent className="flex min-w-0 flex-1 flex-col gap-2 py-3">
+                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                  pedido #{reservation.id.slice(0, 8)}
+                </p>
                 <h2 className="font-head text-base leading-snug">
                   {reservation.event.title}
                 </h2>
@@ -217,19 +265,48 @@ export default function CheckoutPage() {
                 <p className="w-fit border-2 border-black bg-muted px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wide">
                   {seatsLabel}
                 </p>
-                {half > 0 && (
-                  <p className="font-mono text-[11px] text-muted-foreground">
-                    {full} inteira(s) + {half} meia-entrada(s) · documento na portaria
-                  </p>
-                )}
-                <div className="mt-auto flex items-end justify-between gap-2 border-t-2 border-dashed border-black/25 pt-2">
-                  <span className="text-xs text-muted-foreground">Total</span>
-                  <span className="border-2 border-black bg-primary px-2 py-0.5 font-head text-lg shadow-sm">
-                    {formatBRL(reservation.totalCents)}
-                  </span>
-                </div>
               </CardContent>
             </div>
+          </Card>
+
+          {/* nota fiscal do pedido */}
+          <Card>
+            <CardContent className="space-y-2.5 py-4">
+              <h3 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                resumo do pedido
+              </h3>
+
+              <div className="flex items-baseline justify-between gap-2 font-mono text-xs">
+                <span className="text-muted-foreground">
+                  {full}× inteira{full === 1 ? '' : 's'}
+                </span>
+                <span>{formatBRL(intFull)}</span>
+              </div>
+              {half > 0 && (
+                <div className="flex items-baseline justify-between gap-2 font-mono text-xs">
+                  <span className="text-muted-foreground">
+                    {half}× meia-entrada
+                  </span>
+                  <span>{formatBRL(intHalf)}</span>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between gap-2 font-mono text-xs">
+                <span className="text-muted-foreground">taxa de serviço</span>
+                <span className="font-bold text-green-700">grátis</span>
+              </div>
+
+              <div className="mt-1 flex items-baseline justify-between gap-2 border-t-2 border-dashed border-black/30 pt-2.5">
+                <span className="font-head text-sm uppercase">Total</span>
+                <span className="border-2 border-black bg-primary px-2.5 py-1 font-head text-xl shadow-sm">
+                  {formatBRL(reservation.totalCents)}
+                </span>
+              </div>
+              {half > 0 && (
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  meia-entrada: documento na portaria
+                </p>
+              )}
+            </CardContent>
           </Card>
         </div>
 
@@ -423,6 +500,7 @@ export default function CheckoutPage() {
               )}
 
               <Button type="submit" disabled={pay.isPending} className="w-full" size="lg">
+                <Lock className="size-4" aria-hidden />
                 {pay.isPending
                   ? 'Processando…'
                   : method === 'card'
@@ -431,6 +509,10 @@ export default function CheckoutPage() {
                       ? 'Já paguei o Pix'
                       : 'Já paguei o boleto'}
               </Button>
+              <p className="flex items-center justify-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                <ShieldCheck className="size-3.5" aria-hidden />
+                pagamento simulado · ambiente de teste
+              </p>
             </form>
           </CardContent>
         </Card>
