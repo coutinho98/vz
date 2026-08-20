@@ -15,9 +15,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/index.html ./index.html
 COPY --from=build /app/public ./public
+COPY serve.mjs ./serve.mjs
 
 EXPOSE 5173
-CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["node", "serve.mjs"]
