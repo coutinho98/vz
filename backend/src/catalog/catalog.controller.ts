@@ -1,4 +1,10 @@
-import { Controller, DefaultValuePipe, Get, ParseIntPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  DefaultValuePipe,
+  Get,
+  ParseIntPipe,
+  Query,
+} from '@nestjs/common';
 import { Public } from '../auth/decorators/public.decorator';
 import { CatalogService } from './catalog.service';
 import type { CatalogCategory } from './catalog.types';
@@ -9,10 +15,7 @@ export class CatalogController {
 
   @Public()
   @Get('trailer')
-  getTrailer(
-    @Query('ref') ref?: string,
-    @Query('title') title?: string,
-  ) {
+  getTrailer(@Query('ref') ref?: string, @Query('title') title?: string) {
     return this.catalogService.getTrailer(ref, title);
   }
 

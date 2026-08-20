@@ -39,7 +39,10 @@ export class TicketsService {
     });
     const fullPrice = event?.priceCents ?? 0;
     const halfPrice = Math.round(fullPrice / 2);
-    const halfCount = Math.min(reservation.halfCount ?? 0, reservation.quantity);
+    const halfCount = Math.min(
+      reservation.halfCount ?? 0,
+      reservation.quantity,
+    );
 
     if (event?.seatingMode === 'SEATED') {
       return this.prisma.ticket.createManyAndReturn({

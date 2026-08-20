@@ -66,19 +66,28 @@ export class EventsController {
 
   @Roles('ORGANIZER')
   @Post(':id/publish')
-  publish(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+  publish(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.eventsService.publish(user, id);
   }
 
   @Roles('ORGANIZER')
   @Post(':id/cancel')
-  cancel(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+  cancel(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.eventsService.cancel(user, id);
   }
 
   @Roles('ORGANIZER')
   @Delete(':id')
-  remove(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+  remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.eventsService.remove(user, id);
   }
 }

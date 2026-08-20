@@ -35,7 +35,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-beyonce',
     category: 'SHOW',
     title: 'Beyoncé - Renaissance',
-    description: 'Turnê celebrando o álbum Renaissance: balada, house e uma produção visual hipnótica.',
+    description:
+      'Turnê celebrando o álbum Renaissance: balada, house e uma produção visual hipnótica.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'Pop / R&B',
@@ -44,7 +45,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-legiao',
     category: 'SHOW',
     title: 'Legião Urbana - Holograma',
-    description: 'Experiência holográfica que revive os clássicos da maior banda do rock nacional.',
+    description:
+      'Experiência holográfica que revive os clássicos da maior banda do rock nacional.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'Rock Nacional',
@@ -53,7 +55,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-anitta',
     category: 'SHOW',
     title: 'Anitta - Funk Generation',
-    description: 'O funk brasileiro conquistando o mundo com coreografias e produção de arena.',
+    description:
+      'O funk brasileiro conquistando o mundo com coreografias e produção de arena.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'Funk / Pop',
@@ -62,7 +65,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-coldplay',
     category: 'SHOW',
     title: 'Coldplay - Music of the Spheres',
-    description: 'Pulseras luminosas, hits universais e o show mais sustentável do planeta.',
+    description:
+      'Pulseras luminosas, hits universais e o show mais sustentável do planeta.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'Pop Rock',
@@ -71,7 +75,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-elba',
     category: 'SHOW',
     title: 'Elba Ramalho - Forró Rainha',
-    description: 'A rainha do forró com sanfona, zabumba e energia nordestina contagiante.',
+    description:
+      'A rainha do forró com sanfona, zabumba e energia nordestina contagiante.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'Forró',
@@ -80,7 +85,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-tim',
     category: 'SHOW',
     title: 'Tim Maiz - Tribute Jazz',
-    description: 'Releitura jazzística dos clássicos eternos de Tim Maia em casa de espetáculo intimista.',
+    description:
+      'Releitura jazzística dos clássicos eternos de Tim Maia em casa de espetáculo intimista.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'Soul / Jazz',
@@ -89,7 +95,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-dj-avenue',
     category: 'SHOW',
     title: 'Alok - Festival Avenue',
-    description: 'Set especial de 3 horas com convidados surpresa e o melhor do eletrônico mundial.',
+    description:
+      'Set especial de 3 horas com convidados surpresa e o melhor do eletrônico mundial.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'Eletrônica',
@@ -98,7 +105,8 @@ export const SHOWS: CatalogItem[] = [
     ref: 'show-marisa',
     category: 'SHOW',
     title: 'Marisa Monte - Verdade, Uma Ilusão',
-    description: 'A voz mais doce da MPB em turnê com repertório renovado e banda enxuta.',
+    description:
+      'A voz mais doce da MPB em turnê com repertório renovado e banda enxuta.',
     posterUrl: null,
     releaseYear: 2026,
     genre: 'MPB',

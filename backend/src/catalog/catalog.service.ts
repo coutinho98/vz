@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FALLBACK_MOVIES } from './data/movies';
 import { SHOWS } from './data/shows';
-import {
-  CatalogCategory,
-  CatalogItem,
-  CatalogResult,
-} from './catalog.types';
+import { CatalogCategory, CatalogItem, CatalogResult } from './catalog.types';
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -101,7 +97,12 @@ export class CatalogService {
       signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) {
-      return { items: FALLBACK_MOVIES, page: 1, totalPages: 1, source: 'fallback' };
+      return {
+        items: FALLBACK_MOVIES,
+        page: 1,
+        totalPages: 1,
+        source: 'fallback',
+      };
     }
 
     const data = (await response.json()) as {
@@ -134,11 +135,12 @@ export class CatalogService {
       releaseYear: movie.release_date
         ? Number(movie.release_date.slice(0, 4))
         : null,
-      genre: movie.genre_ids
-        .slice(0, 2)
-        .map((id) => GENRE_NAMES[id])
-        .filter(Boolean)
-        .join(' / ') || null,
+      genre:
+        movie.genre_ids
+          .slice(0, 2)
+          .map((id) => GENRE_NAMES[id])
+          .filter(Boolean)
+          .join(' / ') || null,
     };
   }
 
@@ -146,16 +148,34 @@ export class CatalogService {
     ref?: string,
     title?: string,
   ): Promise<{ youtubeKey: string | null; title: string | null }> {
-    const staticTrailers: Record<string, { youtubeKey: string; title: string }> = {
+    const staticTrailers: Record<
+      string,
+      { youtubeKey: string; title: string }
+    > = {
       'movie-duna2': { youtubeKey: 'Way9Dexny3w', title: 'Duna: Parte 2' },
       'movie-oppenheimer': { youtubeKey: 'uYPbbksJxIg', title: 'Oppenheimer' },
       'movie-parasita': { youtubeKey: '5xH0R_gx3Dc', title: 'Parasita' },
-      'movie-tudo-em-todo-lugar': { youtubeKey: 'wxN1T1uxQ2g', title: 'Tudo em Todo Lugar ao Mesmo Tempo' },
-      'movie-cidade-de-deus': { youtubeKey: 'dcUOO4Itgmw', title: 'Cidade de Deus' },
-      'movie-interstellar': { youtubeKey: 'zSWdZVtXT7E', title: 'Interestelar' },
-      'show-coldplay': { youtubeKey: 'V3ZhpFXzL1g', title: 'Coldplay - Music of the Spheres' },
+      'movie-tudo-em-todo-lugar': {
+        youtubeKey: 'wxN1T1uxQ2g',
+        title: 'Tudo em Todo Lugar ao Mesmo Tempo',
+      },
+      'movie-cidade-de-deus': {
+        youtubeKey: 'dcUOO4Itgmw',
+        title: 'Cidade de Deus',
+      },
+      'movie-interstellar': {
+        youtubeKey: 'zSWdZVtXT7E',
+        title: 'Interestelar',
+      },
+      'show-coldplay': {
+        youtubeKey: 'V3ZhpFXzL1g',
+        title: 'Coldplay - Music of the Spheres',
+      },
       'show-alok': { youtubeKey: 'sW8YtF7Gk1U', title: 'Alok - Live Show' },
-      'show-orquestra': { youtubeKey: 'Q_k8QZ7x5j4', title: 'Orquestra Petrobras Sinfônica' },
+      'show-orquestra': {
+        youtubeKey: 'Q_k8QZ7x5j4',
+        title: 'Orquestra Petrobras Sinfônica',
+      },
     };
 
     if (ref && staticTrailers[ref]) {
@@ -173,7 +193,14 @@ export class CatalogService {
               { signal: AbortSignal.timeout(5000) },
             );
             if (!res.ok) return [];
-            const data = (await res.json()) as { results?: Array<{ site: string; type: string; key: string; name: string }> };
+            const data = (await res.json()) as {
+              results?: Array<{
+                site: string;
+                type: string;
+                key: string;
+                name: string;
+              }>;
+            };
             return data.results || [];
           };
 
@@ -184,7 +211,11 @@ export class CatalogService {
 
           const trailer =
             videos.find((v) => v.site === 'YouTube' && v.type === 'Trailer') ||
-            videos.find((v) => v.site === 'YouTube' && (v.type === 'Teaser' || v.type === 'Clip')) ||
+            videos.find(
+              (v) =>
+                v.site === 'YouTube' &&
+                (v.type === 'Teaser' || v.type === 'Clip'),
+            ) ||
             videos.find((v) => v.site === 'YouTube');
 
           if (trailer) {
@@ -199,7 +230,10 @@ export class CatalogService {
     if (title) {
       const normalized = title.toLowerCase();
       for (const [key, item] of Object.entries(staticTrailers)) {
-        if (normalized.includes(item.title.toLowerCase()) || item.title.toLowerCase().includes(normalized)) {
+        if (
+          normalized.includes(item.title.toLowerCase()) ||
+          item.title.toLowerCase().includes(normalized)
+        ) {
           return item;
         }
       }

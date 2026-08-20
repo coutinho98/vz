@@ -14,10 +14,9 @@ export class SeatsStreamController {
   ): Observable<{ data: unknown }> {
     const room = this.broadcast.join(id);
     // ping a cada 25s pra conexão não fechar por timeout
-    const heartbeat = interval(25_000).pipe(map(() => ({ data: { type: 'ping' } })));
-    return merge(
-      room.pipe(map((event) => ({ data: event }))),
-      heartbeat,
+    const heartbeat = interval(25_000).pipe(
+      map(() => ({ data: { type: 'ping' } })),
     );
+    return merge(room.pipe(map((event) => ({ data: event }))), heartbeat);
   }
 }

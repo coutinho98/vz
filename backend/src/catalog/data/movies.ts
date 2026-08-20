@@ -75,7 +75,8 @@ export const FALLBACK_MOVIES: CatalogItem[] = [
     ref: 'movie-spiderverse',
     category: 'MOVIE',
     title: 'Homem-Aranha: Através do Aranhaverso',
-    description: 'Miles Morales atravessa o multiverso e desafia o próprio destino do herói.',
+    description:
+      'Miles Morales atravessa o multiverso e desafia o próprio destino do herói.',
     posterUrl: null,
     releaseYear: 2023,
     genre: 'Animação / Aventura',
@@ -84,7 +85,8 @@ export const FALLBACK_MOVIES: CatalogItem[] = [
     ref: 'movie-poderoso-chefao',
     category: 'MOVIE',
     title: 'O Poderoso Chefão',
-    description: 'A saga da família Corleone e a ascensão de Michael no crime organizado.',
+    description:
+      'A saga da família Corleone e a ascensão de Michael no crime organizado.',
     posterUrl: null,
     releaseYear: 1972,
     genre: 'Clássico / Drama',

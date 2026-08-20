@@ -17,28 +17,29 @@ import { PayReservationDto } from './dto/pay-reservation.dto';
  * Qualquer outro número válido é aprovado - ex.: 4242 4242 4242 4242.
  * https://docs.stripe.com/testing
  */
-const STRIPE_TEST_DECLINES: Record<string, { code: string; message: string }> = {
-  '4000000000000002': {
-    code: 'card_declined',
-    message: 'Cartão recusado pela operadora (card_declined).',
-  },
-  '4000000000009995': {
-    code: 'insufficient_funds',
-    message: 'Saldo insuficiente no cartão (insufficient_funds).',
-  },
-  '4000000000009987': {
-    code: 'lost_card',
-    message: 'Cartão reportado como perdido (lost_card).',
-  },
-  '4000000000000069': {
-    code: 'expired_card',
-    message: 'Cartão expirado (expired_card).',
-  },
-  '4000000000000127': {
-    code: 'incorrect_cvc',
-    message: 'Código de segurança incorreto (incorrect_cvc).',
-  },
-};
+const STRIPE_TEST_DECLINES: Record<string, { code: string; message: string }> =
+  {
+    '4000000000000002': {
+      code: 'card_declined',
+      message: 'Cartão recusado pela operadora (card_declined).',
+    },
+    '4000000000009995': {
+      code: 'insufficient_funds',
+      message: 'Saldo insuficiente no cartão (insufficient_funds).',
+    },
+    '4000000000009987': {
+      code: 'lost_card',
+      message: 'Cartão reportado como perdido (lost_card).',
+    },
+    '4000000000000069': {
+      code: 'expired_card',
+      message: 'Cartão expirado (expired_card).',
+    },
+    '4000000000000127': {
+      code: 'incorrect_cvc',
+      message: 'Código de segurança incorreto (incorrect_cvc).',
+    },
+  };
 
 // gera um "copia e cola" de pix plausivel (nao valido de verdade)
 function fakePixPayload(reservationId: string, cents: number) {
@@ -80,7 +81,11 @@ export class PaymentsService {
   ) {}
 
   // gera o "instrumento" de pagamento sem confirmar nada (pix/boleto)
-  async createIntent(user: AuthUser, reservationId: string, dto: PayReservationDto) {
+  async createIntent(
+    user: AuthUser,
+    reservationId: string,
+    dto: PayReservationDto,
+  ) {
     const reservation = await this.getPayableReservation(user, reservationId);
     const method = dto.method ?? 'card';
 
@@ -107,7 +112,9 @@ export class PaymentsService {
       };
     }
 
-    throw new BadRequestException('Intent disponível apenas para pix ou boleto');
+    throw new BadRequestException(
+      'Intent disponível apenas para pix ou boleto',
+    );
   }
 
   async pay(user: AuthUser, reservationId: string, dto: PayReservationDto) {
@@ -134,7 +141,11 @@ export class PaymentsService {
       return this.payWithCard(reservation, dto);
     }
     // pix/boleto: a "confirmacao" chega aqui como se fosse o webhook do PSP
-    return this.approve(reservation, method, method === 'pix' ? 'Pix' : 'Boleto');
+    return this.approve(
+      reservation,
+      method,
+      method === 'pix' ? 'Pix' : 'Boleto',
+    );
   }
 
   private async getPayableReservation(user: AuthUser, reservationId: string) {
@@ -169,7 +180,8 @@ export class PaymentsService {
 
     // normaliza: o numero pode chegar com ou sem espaços (4242 4242… vs 42424242…)
     const digits = dto.cardNumber.replace(/\D/g, '');
-    const decline = STRIPE_TEST_DECLINES[digits] ?? STRIPE_TEST_DECLINES[dto.cardNumber];
+    const decline =
+      STRIPE_TEST_DECLINES[digits] ?? STRIPE_TEST_DECLINES[dto.cardNumber];
     const brand = this.detectBrand(digits);
     const last4 = digits.slice(-4);
 

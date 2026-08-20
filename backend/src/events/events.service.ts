@@ -32,7 +32,9 @@ export class EventsService {
       .filter((d): d is string => !!d)
       .map((d) => new Date(d));
     if (dates.length === 0 || dates.some((d) => Number.isNaN(d.getTime()))) {
-      throw new BadRequestException('Informe ao menos uma data de sessão válida');
+      throw new BadRequestException(
+        'Informe ao menos uma data de sessão válida',
+      );
     }
     const past = dates.filter((d) => d.getTime() <= Date.now());
     if (past.length > 0) {
@@ -120,7 +122,9 @@ export class EventsService {
       status: 'PUBLISHED',
       startsAt: { gt: new Date() }, // esconde eventos passados
       ...(query.category ? { category: query.category } : {}),
-      ...(query.city ? { city: { contains: query.city, mode: 'insensitive' } } : {}),
+      ...(query.city
+        ? { city: { contains: query.city, mode: 'insensitive' } }
+        : {}),
       ...(query.search
         ? {
             OR: [
@@ -246,12 +250,23 @@ export class EventsService {
       event.title,
     );
 
-    return { ...event, availability, sessionCount: sessions.length, sessions, trailer };
+    return {
+      ...event,
+      availability,
+      sessionCount: sessions.length,
+      sessions,
+      trailer,
+    };
   }
 
   async availability(
     eventId: string,
-    event: { seatingMode: string; rowsCount: number | null; seatsPerRow: number | null; capacity: number | null },
+    event: {
+      seatingMode: string;
+      rowsCount: number | null;
+      seatsPerRow: number | null;
+      capacity: number | null;
+    },
   ) {
     if (event.seatingMode === 'SEATED') {
       const total = (event.rowsCount ?? 0) * (event.seatsPerRow ?? 0);
@@ -329,7 +344,9 @@ export class EventsService {
   async update(user: AuthUser, id: string, dto: UpdateEventDto) {
     const event = await this.getOwnedEvent(user, id);
     if (event.status !== 'DRAFT') {
-      throw new BadRequestException('Apenas eventos em rascunho podem ser editados');
+      throw new BadRequestException(
+        'Apenas eventos em rascunho podem ser editados',
+      );
     }
     if (dto.startsAt && new Date(dto.startsAt).getTime() <= Date.now()) {
       throw new BadRequestException('A nova data não pode estar no passado');
@@ -343,7 +360,10 @@ export class EventsService {
     if (event.status !== 'DRAFT') {
       throw new BadRequestException('Evento já foi publicado ou cancelado');
     }
-    return this.prisma.event.update({ where: { id }, data: { status: 'PUBLISHED' } });
+    return this.prisma.event.update({
+      where: { id },
+      data: { status: 'PUBLISHED' },
+    });
   }
 
   async cancel(user: AuthUser, id: string) {
@@ -359,7 +379,10 @@ export class EventsService {
         where: { eventId: id, status: 'VALID' },
         data: { status: 'CANCELLED' },
       }),
-      this.prisma.event.update({ where: { id }, data: { status: 'CANCELLED' } }),
+      this.prisma.event.update({
+        where: { id },
+        data: { status: 'CANCELLED' },
+      }),
     ]);
 
     return this.prisma.event.findUnique({ where: { id } });

@@ -34,9 +34,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client = new Redis(url, {
       retryStrategy: (times) => Math.min(times * 200, 2000),
     });
-    this.client.on('error', (err) =>
-      this.logger.warn(`redis: ${err.message}`),
-    );
+    this.client.on('error', (err) => this.logger.warn(`redis: ${err.message}`));
     await new Promise<void>((resolve) => {
       this.client!.on('ready', () => resolve());
     });

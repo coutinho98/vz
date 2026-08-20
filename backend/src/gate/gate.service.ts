@@ -42,7 +42,11 @@ export class GateService {
     return mine.filter((event) => event.status === 'PUBLISHED');
   }
 
-  async checkIn(user: AuthUser, eventId: string, rawCode: string): Promise<CheckInResult> {
+  async checkIn(
+    user: AuthUser,
+    eventId: string,
+    rawCode: string,
+  ): Promise<CheckInResult> {
     await this.assertGateAccess(user, eventId);
 
     const code = normalizeTicketCode(rawCode);
@@ -118,22 +122,25 @@ export class GateService {
       by: ['row'],
       where: { eventId: ticket.eventId },
     });
-    const lastRow = seatRows.map((s) => s.row).sort().pop();
+    const lastRow = seatRows
+      .map((s) => s.row)
+      .sort()
+      .pop();
     const isPcdSeat = !!updated.seat && updated.seat.row === lastRow;
     const roomPrefix = updated.event.room ? `${updated.event.room} · ` : '';
     return {
       status: 'VALID',
       message: `Entrada liberada - ${roomPrefix}${updated.seatLabel ? `Assento ${updated.seatLabel}` : 'pista'}${
         isPcdSeat ? ' · PCD: espaço acessível' : ''
-      }${
-        updated.kind === 'HALF' ? ' · MEIA: verificar documento' : ''
-      }.`,
+      }${updated.kind === 'HALF' ? ' · MEIA: verificar documento' : ''}.`,
       ticket: this.toTicketDto(updated),
     };
   }
 
   private async assertGateAccess(user: AuthUser, eventId: string) {
-    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+    });
     if (!event) throw new NotFoundException('Evento não encontrado');
 
     if (user.role === 'GATE') {
