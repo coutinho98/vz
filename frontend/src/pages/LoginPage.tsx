@@ -137,12 +137,43 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
-      <div className="mt-6 rounded border-2 border-dashed border-black/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
-        <p className="font-bold text-foreground">CONTAS DEMO (seed):</p>
-        <p className="mt-1">
-          marina (promoções) · maria (plateia) · joao (camarote) · paulo
-          (portaria) @vz.com · senha 123456
-        </p>
+      <div className="mt-6 overflow-hidden rounded border-2 border-black/40">
+        <table className="w-full border-collapse font-mono text-xs">
+          <thead>
+            <tr className="bg-foreground text-background">
+              <th className="px-3 py-1.5 text-left font-bold uppercase tracking-widest" colSpan={3}>
+                Contas demo · senha 123456
+              </th>
+            </tr>
+            <tr className="border-b-2 border-black/40 bg-muted/60 text-muted-foreground">
+              <th className="px-3 py-1.5 text-left font-bold">Email</th>
+              <th className="px-3 py-1.5 text-left font-bold">Nome</th>
+              <th className="px-3 py-1.5 text-left font-bold">Papel</th>
+            </tr>
+          </thead>
+          <tbody className="text-muted-foreground">
+            <tr className="border-b border-black/20">
+              <td className="px-3 py-1.5 font-bold text-foreground">marina@vz.com</td>
+              <td className="px-3 py-1.5">Marina Promoções</td>
+              <td className="px-3 py-1.5">Organizadora</td>
+            </tr>
+            <tr className="border-b border-black/20">
+              <td className="px-3 py-1.5 font-bold text-foreground">maria@vz.com</td>
+              <td className="px-3 py-1.5">Maria Plateia</td>
+              <td className="px-3 py-1.5">Cliente</td>
+            </tr>
+            <tr className="border-b border-black/20">
+              <td className="px-3 py-1.5 font-bold text-foreground">joao@vz.com</td>
+              <td className="px-3 py-1.5">João Camarote</td>
+              <td className="px-3 py-1.5">Cliente</td>
+            </tr>
+            <tr>
+              <td className="px-3 py-1.5 font-bold text-foreground">paulo@vz.com</td>
+              <td className="px-3 py-1.5">Paulo Portaria</td>
+              <td className="px-3 py-1.5">Portaria</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );
