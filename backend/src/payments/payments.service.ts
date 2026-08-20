@@ -167,9 +167,11 @@ export class PaymentsService {
       throw new BadRequestException('Preencha todos os dados do cartão');
     }
 
-    const decline = STRIPE_TEST_DECLINES[dto.cardNumber];
-    const brand = this.detectBrand(dto.cardNumber);
-    const last4 = dto.cardNumber.slice(-4);
+    // normaliza: o numero pode chegar com ou sem espaços (4242 4242… vs 42424242…)
+    const digits = dto.cardNumber.replace(/\D/g, '');
+    const decline = STRIPE_TEST_DECLINES[digits] ?? STRIPE_TEST_DECLINES[dto.cardNumber];
+    const brand = this.detectBrand(digits);
+    const last4 = digits.slice(-4);
 
     if (decline) {
       const payment = await this.prisma.payment.create({
