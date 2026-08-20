@@ -38,12 +38,7 @@ async function main() {
     );
   } catch {}
 
-  const eventCount = await prisma.event.count();
-  if (eventCount > 0) {
-    console.log(`Banco de dados já contém ${eventCount} eventos. Pulando seed.`);
-    return;
-  }
-
+  // usuários demo sempre garantidos (upsert), independente de eventos
   const [organizer, customer, customer2, gate] = await Promise.all([
     prisma.user.upsert({
       where: { email: 'marina@vz.com' },
@@ -88,6 +83,14 @@ async function main() {
   ]);
   void gate;
   void customer2;
+
+  const eventCount = await prisma.event.count();
+  if (eventCount > 0) {
+    console.log(
+      `Usuários ok. Banco já contém ${eventCount} eventos. Pulando eventos.`,
+    );
+    return;
+  }
 
   const seats = (rows: number, perRow: number) => {
     const data: { row: string; number: number }[] = [];
