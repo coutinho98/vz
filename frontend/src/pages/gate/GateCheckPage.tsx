@@ -18,6 +18,7 @@ type LastCheck =
 export default function GateCheckPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const [cameraOn, setCameraOn] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [manualCode, setManualCode] = useState('');
   const [last, setLast] = useState<LastCheck | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
@@ -98,9 +99,10 @@ export default function GateCheckPage() {
   async function startCamera() {
     setCamError(null);
     setLast(null);
+    setStarting(true);
 
-    if (typeof window === 'undefined') return;
-    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    if (typeof window !== 'undefined' && (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia)) {
+      setStarting(false);
       setCamError(
         'A câmera só funciona em conexão segura (HTTPS) e não é suportada em navegadores embutidos (Instagram, Facebook etc.). Abra o site direto no navegador em https://… e tente novamente, ou use a digitação manual abaixo.',
       );
@@ -144,6 +146,8 @@ export default function GateCheckPage() {
       setCameraOn(true);
     } catch (err) {
       setCamError(cameraErrorMessage(err));
+    } finally {
+      setStarting(false);
     }
   }
 
@@ -188,17 +192,26 @@ export default function GateCheckPage() {
                 Parar câmera
               </Button>
             ) : (
-              <Button size="sm" onClick={() => void startCamera()}>
-                Ligar câmera
+              <Button size="sm" disabled={starting} onClick={() => void startCamera()}>
+                {starting ? 'Iniciando…' : 'Ligar câmera'}
               </Button>
             )}
           </div>
 
           <div
             id="qr-reader"
-            className={`rounded border-2 ${cameraOn ? 'border-black' : 'border-dashed border-black/40 bg-muted/40'}`}
+            className={`relative overflow-hidden rounded border-2 ${
+              cameraOn || starting
+                ? 'min-h-[340px] border-black bg-black'
+                : 'border-dashed border-black/40 bg-muted/40'
+            }`}
           >
-            {!cameraOn && (
+            {starting && !cameraOn && (
+              <p className="absolute inset-0 flex items-center justify-center font-mono text-xs uppercase tracking-widest text-white/80">
+                abrindo câmera…
+              </p>
+            )}
+            {!cameraOn && !starting && (
               <p className="px-4 py-10 text-center text-sm text-muted-foreground">
                 Câmera desligada. Clique em “Ligar câmera” para escanear o ingresso
                 ou use a digitação manual abaixo.
