@@ -558,9 +558,9 @@ npm run dev:web    # Frontend React: http://localhost:5173
 ```
 
 - **Contas de Teste (Senha `123456`)**:
-  - `organizador@vz.com` (Criação de eventos, sessões e portaria dos próprios)
-  - `cliente@vz.com` e `cliente2@vz.com` (Reserva, assentos, pagamento e meus ingressos)
-  - `portaria@vz.com` (Validação de qualquer evento publicado)
+  - `marina@vz.com` (Criação de eventos, sessões e portaria dos próprios)
+  - `maria@vz.com` e `joao@vz.com` (Reserva, assentos, pagamento e meus ingressos)
+  - `paulo@vz.com` (Validação de qualquer evento publicado)
 - **Cartões de Teste Stripe**:
   - `4242 4242 4242 4242` → **Aprova**
   - `4000 0000 0000 0002` → **Recusa** (`card_declined`)

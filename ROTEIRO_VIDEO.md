@@ -23,10 +23,10 @@ npm run dev:web    # http://localhost:5173
 
 ### 🖥️ 2. Organização das Janelas de Gravação
 1. **Navegador 1 (Esquerda - Janela Principal)**: 
-   - Aba 1: `http://localhost:5173` (logado como `cliente@vz.com` ou deslogado na home).
-   - Aba 2: `http://localhost:5173/login` (para trocar para `organizador@vz.com` ou `portaria@vz.com`).
+   - Aba 1: `http://localhost:5173` (logado como `maria@vz.com` ou deslogado na home).
+   - Aba 2: `http://localhost:5173/login` (para trocar para `marina@vz.com` ou `paulo@vz.com`).
 2. **Navegador 2 (Direita - Janela Anônima / Outro Navegador)**:
-   - `http://localhost:5173` (logado como `cliente2@vz.com`).
+   - `http://localhost:5173` (logado como `joao@vz.com`).
    - *Finalidade*: Demonstrar a atualização instantânea do mapa de assentos via SSE em tempo real sem refresh.
 3. **VS Code (Janela Alternativa - Atalho Alt+Tab)**:
    - Deixe abertos os seguintes arquivos em abas fixadas:
@@ -39,9 +39,9 @@ npm run dev:web    # http://localhost:5173
 
 ### 📝 3. Bloco de Notas / Colar Fácil (Colinha de Testes)
 - **Logins (Senha: `123456`)**:
-  - Organizador: `organizador@vz.com`
-  - Clientes: `cliente@vz.com` | `cliente2@vz.com`
-  - Portaria: `portaria@vz.com`
+  - Organizador: `marina@vz.com`
+  - Clientes: `maria@vz.com` | `joao@vz.com`
+  - Portaria: `paulo@vz.com`
 - **Cartões de Teste Stripe**:
   - Sucesso: `4242 4242 4242 4242`
   - Recusa (Saldo): `4000 0000 0000 9995`
@@ -86,7 +86,7 @@ npm run dev:web    # http://localhost:5173
 ### 🟢 BLOCO 2: Organizador & Integração com Catálogo Externo (01:00 – 02:30)
 
 #### 🎬 O que mostrar na tela:
-1. Faça login com `organizador@vz.com` / `123456`.
+1. Faça login com `marina@vz.com` / `123456`.
 2. Acesse o **Painel do Organizador** e clique em **"Criar Evento"**.
 3. **Passo 1 (Catálogo)**: Digite um filme no campo de busca (ex: *"Duna"* ou *"Batman"*). Mostre os pôsteres e sinopses carregados da API do TMDb. Selecione um item e mostre que o título, descrição e imagem são pré-preenchidos.
 4. **Passo 2 (Configuração)**: Mostre a flexibilidade de configurar sessões múltiplas, definir local, preço e escolher entre **Assentos Marcados (SEATED)** ou **Pista (STANDING)**.
@@ -111,8 +111,8 @@ npm run dev:web    # http://localhost:5173
 
 #### 🎬 O que mostrar na tela (Demonstração Prática):
 1. **Posicione duas janelas lado a lado**:
-   - Janela Esquerda: Cliente 1 (`cliente@vz.com`) acessando o detalhe de um evento com mapa de assentos.
-   - Janela Direita: Cliente 2 (`cliente2@vz.com`) acessando exatamente a mesma página do evento.
+   - Janela Esquerda: Cliente 1 (`maria@vz.com`) acessando o detalhe de um evento com mapa de assentos.
+   - Janela Direita: Cliente 2 (`joao@vz.com`) acessando exatamente a mesma página do evento.
 2. Na janela do **Cliente 1**, clique nos assentos **B3 e B4** e clique em **"Reservar Assentos"**.
 3. **Repare na Janela do Cliente 2**: *Instantaneamente, sem recarregar a página (F5)*, os assentos B3 e B4 mudam de cor para **cinza (ocupados)**.
 4. Tente selecionar o mesmo assento na Janela do Cliente 2 para mostrar que o sistema bloqueia a ação.
@@ -173,7 +173,7 @@ npm run dev:web    # http://localhost:5173
 ### 🟢 BLOCO 5: Portaria (Gate Check-In) & Prevenção Anti-Validação Dupla (06:30 – 08:00)
 
 #### 🎬 O que mostrar na tela:
-1. Faça logout e login como `portaria@vz.com` / `123456`.
+1. Faça logout e login como `paulo@vz.com` / `123456`.
 2. Acesse a tela de validação do evento correspondente (`GateCheckPage`).
 3. **Cenário 1 (Entrada Válida)**:
    - Ative a câmera ou cole o link/código do ingresso emitido no bloco anterior.

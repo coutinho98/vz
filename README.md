@@ -42,7 +42,7 @@ npm run dev:web   # http://localhost:5173
 
 ### Contas de demonstração (senha `123456`)
 
-organizador@vz.com, cliente@vz.com, cliente2@vz.com e portaria@vz.com
+marina@vz.com, maria@vz.com, joao@vz.com e paulo@vz.com
 
 ### Cartões de teste (padrão Stripe)
 

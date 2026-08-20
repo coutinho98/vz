@@ -46,41 +46,41 @@ async function main() {
 
   const [organizer, customer, customer2, gate] = await Promise.all([
     prisma.user.upsert({
-      where: { email: 'organizador@vz.com' },
+      where: { email: 'marina@vz.com' },
       update: {},
       create: {
-        name: 'Maria Organizadora',
-        email: 'organizador@vz.com',
+        name: 'Marina Promoções',
+        email: 'marina@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'ORGANIZER',
       },
     }),
     prisma.user.upsert({
-      where: { email: 'cliente@vz.com' },
+      where: { email: 'maria@vz.com' },
       update: {},
       create: {
-        name: 'João Cliente',
-        email: 'cliente@vz.com',
+        name: 'Maria Plateia',
+        email: 'maria@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'CUSTOMER',
       },
     }),
     prisma.user.upsert({
-      where: { email: 'cliente2@vz.com' },
+      where: { email: 'joao@vz.com' },
       update: {},
       create: {
-        name: 'Carla Cliente',
-        email: 'cliente2@vz.com',
+        name: 'João Camarote',
+        email: 'joao@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'CUSTOMER',
       },
     }),
     prisma.user.upsert({
-      where: { email: 'portaria@vz.com' },
+      where: { email: 'paulo@vz.com' },
       update: {},
       create: {
-        name: 'Pablo Portaria',
-        email: 'portaria@vz.com',
+        name: 'Paulo Portaria',
+        email: 'paulo@vz.com',
         passwordHash: await bcrypt.hash('123456', 10),
         role: 'GATE',
       },
@@ -258,10 +258,10 @@ async function main() {
   });
 
   console.log('Seed concluído: 4 usuários, 6 eventos, 1 ingresso demo');
-  console.log('  organizador@vz.com / 123456 (ORGANIZER)');
-  console.log('  cliente@vz.com    / 123456 (CUSTOMER)');
-  console.log('  cliente2@vz.com   / 123456 (CUSTOMER)');
-  console.log('  portaria@vz.com   / 123456 (GATE)');
+  console.log('  marina@vz.com (ORGANIZER)   / 123456');
+  console.log('  maria@vz.com  (CUSTOMER)    / 123456');
+  console.log('  joao@vz.com   (CUSTOMER)    / 123456');
+  console.log('  paulo@vz.com  (GATE)        / 123456');
 }
 
 main()
