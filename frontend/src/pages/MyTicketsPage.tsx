@@ -124,7 +124,7 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
       }`}
     >
       <div className="flex gap-4 p-4">
-        <div className="h-28 w-20 shrink-0 overflow-hidden">
+        <div className="h-[168px] w-28 shrink-0 overflow-hidden sm:h-[188px] sm:w-32">
           <Poster src={ticket.event.posterUrl} alt={ticket.event.title} className="border-0" />
         </div>
         <div className="min-w-0 space-y-1.5">
@@ -136,7 +136,7 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
               {ticket.event.category === 'SHOW' ? 'Show' : 'Filme'}
             </Badge>
           </div>
-          <h3 className="truncate font-head text-base leading-snug">{ticket.event.title}</h3>
+          <h3 className="truncate font-head text-base leading-snug sm:text-lg">{ticket.event.title}</h3>
           <p className="text-sm text-muted-foreground">
             {formatDateTime(ticket.event.startsAt)} · {ticket.event.venue}
           </p>
