@@ -28,11 +28,12 @@ services:
 
   api:
     build: ./backend
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql://vz:vz@db:5432/vz?schema=public
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-me}
-      TMDB_API_KEY: ${TMDB_API_KEY:-}
       PORT: 3000
     ports:
       - '3000:3000'
