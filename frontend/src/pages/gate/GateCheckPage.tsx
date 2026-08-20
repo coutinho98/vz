@@ -45,31 +45,79 @@ export default function GateCheckPage() {
     return (match ? match[1] : raw.trim().toUpperCase()).replace(/\s/g, '');
   }
 
+  function cameraErrorMessage(err: unknown): string {
+    const name = err instanceof Error ? err.name : '';
+    if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+      return 'Permissão de câmera negada. Toque no ícone de cadeado/localização na barra do navegador e permita o acesso à câmera, ou use a digitação manual abaixo.';
+    }
+    if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+      return 'Nenhuma câmera encontrada neste dispositivo. Use a digitação manual abaixo.';
+    }
+    if (name === 'NotReadableError' || name === 'TrackStartError') {
+      return 'A câmera está em uso por outro aplicativo. Feche os outros apps/navegadores e tente novamente, ou use a digitação manual abaixo.';
+    }
+    return 'Não foi possível acessar a câmera. Use a digitação manual abaixo. (' + String(err) + ')';
+  }
+
+  async function startScanner(
+    camera: string | { facingMode: string },
+    onScan: (decoded: string) => void,
+  ) {
+    const scanner = new Html5Qrcode('qr-reader');
+    scannerRef.current = scanner;
+    await scanner.start(
+      camera,
+      {
+        fps: 10,
+        qrbox: (vw: number) => {
+          const size = Math.max(180, Math.min(280, Math.floor(vw * 0.7)));
+          return { width: size, height: size };
+        },
+      },
+      onScan,
+      () => undefined,
+    );
+  }
+
   async function startCamera() {
     setCamError(null);
     setLast(null);
-    try {
-      const scanner = new Html5Qrcode('qr-reader');
-      scannerRef.current = scanner;
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 8, qrbox: { width: 220, height: 220 } },
-        (decoded) => {
-          const code = extractCode(decoded);
-          if (!checkIn.isPending) {
-            scanner.stop().then(() => setCameraOn(false));
-            checkIn.mutate(code);
-          }
-        },
-        () => undefined,
+
+    if (typeof window === 'undefined') return;
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      setCamError(
+        'A câmera só funciona em conexão segura (HTTPS) e não é suportada em navegadores embutidos (Instagram, Facebook etc.). Abra o site direto no navegador em https://… e tente novamente, ou use a digitação manual abaixo.',
       );
+      return;
+    }
+
+    const onScan = (decoded: string) => {
+      const code = extractCode(decoded);
+      if (!checkIn.isPending) {
+        scannerRef.current?.stop().then(() => setCameraOn(false));
+        checkIn.mutate(code);
+      }
+    };
+
+    try {
+      try {
+        await startScanner({ facingMode: 'environment' }, onScan);
+      } catch (firstErr) {
+        try {
+          await scannerRef.current?.clear();
+        } catch {
+          /* scanner já parado */
+        }
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras.length) throw firstErr;
+        const back = cameras.find((c) =>
+          /back|rear|traseira|environment/i.test(c.label),
+        );
+        await startScanner(back?.id ?? cameras[cameras.length - 1].id, onScan);
+      }
       setCameraOn(true);
     } catch (err) {
-      setCamError(
-        'Não foi possível acessar a câmera. Use a digitação manual abaixo. (' +
-          String(err) +
-          ')',
-      );
+      setCamError(cameraErrorMessage(err));
     }
   }
 
