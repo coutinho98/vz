@@ -139,24 +139,28 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
           <h3 className="truncate font-head text-base leading-snug">{ticket.event.title}</h3>
           <p className="text-sm text-muted-foreground">
             {formatDateTime(ticket.event.startsAt)} · {ticket.event.venue}
-            {ticket.event.room ? ` (${ticket.event.room})` : ''}
           </p>
-          <p className="text-sm">
+          <div className="flex flex-wrap items-center gap-2 pt-0.5 text-sm">
+            {ticket.event.room && (
+              <span className="rounded border-2 border-black bg-muted px-2 py-0.5 font-mono text-xs font-bold text-foreground">
+                {ticket.event.room}
+              </span>
+            )}
             {ticket.seatLabel ? (
-              <>
-                Lugar <span className="rounded border-2 border-black bg-primary px-1.5 font-head">{ticket.seatLabel}</span>
-              </>
+              <span className="flex items-center gap-1">
+                Lugar <span className="rounded border-2 border-black bg-primary px-1.5 py-0.5 font-head font-bold">{ticket.seatLabel}</span>
+              </span>
             ) : (
-              <>
-                Pista <span className="text-muted-foreground">· ingresso individual</span>
-              </>
+              <span className="rounded border-2 border-black bg-muted px-1.5 py-0.5 font-mono text-xs font-bold text-foreground">
+                Pista
+              </span>
             )}
             {ticket.kind === 'HALF' && (
-              <span className="ml-2 rounded border-2 border-black bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
+              <span className="rounded border-2 border-black bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
                 meia
               </span>
             )}
-          </p>
+          </div>
           {paymentLabel && (
             <p className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
               {paymentIcon}

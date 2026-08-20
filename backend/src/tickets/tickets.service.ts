@@ -80,6 +80,7 @@ export class TicketsService {
           select: {
             title: true,
             venue: true,
+            room: true,
             city: true,
             startsAt: true,
             posterUrl: true,
@@ -108,6 +109,7 @@ export class TicketsService {
           select: {
             title: true,
             venue: true,
+            room: true,
             city: true,
             startsAt: true,
             posterUrl: true,
