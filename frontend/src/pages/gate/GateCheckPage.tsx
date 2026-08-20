@@ -79,6 +79,22 @@ export default function GateCheckPage() {
     );
   }
 
+  async function resetScanner() {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    if (!scanner) return;
+    try {
+      await scanner.stop();
+    } catch {
+      /* já parado */
+    }
+    try {
+      await scanner.clear();
+    } catch {
+      /* já limpo */
+    }
+  }
+
   async function startCamera() {
     setCamError(null);
     setLast(null);
@@ -94,26 +110,36 @@ export default function GateCheckPage() {
     const onScan = (decoded: string) => {
       const code = extractCode(decoded);
       if (!checkIn.isPending) {
-        scannerRef.current?.stop().then(() => setCameraOn(false));
+        scannerRef.current
+          ?.stop()
+          .then(() => setCameraOn(false))
+          .catch(() => setCameraOn(false));
         checkIn.mutate(code);
       }
     };
 
     try {
+      // no iOS o facingMode costuma falhar: enumera as câmeras (isso também
+      // dispara o prompt de permissão corretamente) e usa o ID da traseira
+      let cameraId: string | null = null;
       try {
-        await startScanner({ facingMode: 'environment' }, onScan);
-      } catch (firstErr) {
-        try {
-          await scannerRef.current?.clear();
-        } catch {
-          /* scanner já parado */
-        }
         const cameras = await Html5Qrcode.getCameras();
-        if (!cameras.length) throw firstErr;
         const back = cameras.find((c) =>
-          /back|rear|traseira|environment/i.test(c.label),
+          /back|rear|traseira|environment|arrière/i.test(c.label),
         );
-        await startScanner(back?.id ?? cameras[cameras.length - 1].id, onScan);
+        cameraId = back?.id ?? (cameras.length ? cameras[cameras.length - 1].id : null);
+      } catch (err) {
+        // se a enumeração falhou por permissão negada, esse é o erro real
+        const name = err instanceof Error ? err.name : '';
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') throw err;
+      }
+
+      try {
+        await startScanner(cameraId ?? { facingMode: 'environment' }, onScan);
+      } catch (err) {
+        if (!cameraId) throw err;
+        await resetScanner();
+        await startScanner({ facingMode: 'environment' }, onScan);
       }
       setCameraOn(true);
     } catch (err) {
@@ -122,15 +148,7 @@ export default function GateCheckPage() {
   }
 
   async function stopCamera() {
-    const scanner = scannerRef.current;
-    if (scanner) {
-      try {
-        await scanner.stop();
-        scanner.clear();
-      } catch {
-        /* already stopped */
-      }
-    }
+    await resetScanner();
     setCameraOn(false);
   }
 
