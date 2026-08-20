@@ -62,7 +62,7 @@ function TypographicPoster({ title, genre }: { title: string; genre?: string }) 
 }
 
 // mesma imagem do tmdb em miniatura (5KB): serve de placeholder borrado
-// enquanto a versao grande (80KB) chega — lqip via cdn, zero dependencias
+// enquanto a versao grande (80KB) chega: lqip via cdn, zero dependencias
 const lqipUrl = (url: string) => url.replace('/t/p/w500', '/t/p/w92');
 
 export function Poster({

@@ -14,7 +14,7 @@ import { PayReservationDto } from './dto/pay-reservation.dto';
 
 /**
  * Cartões de teste oficiais da Stripe (ambiente sandbox).
- * Qualquer outro número válido é aprovado — ex.: 4242 4242 4242 4242.
+ * Qualquer outro número válido é aprovado - ex.: 4242 4242 4242 4242.
  * https://docs.stripe.com/testing
  */
 const STRIPE_TEST_DECLINES: Record<string, { code: string; message: string }> = {

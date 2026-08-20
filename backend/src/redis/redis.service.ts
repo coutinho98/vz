@@ -27,7 +27,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     const url = process.env.REDIS_URL;
     if (!url) {
-      this.logger.log('REDIS_URL ausente — modo somente-Postgres');
+      this.logger.log('REDIS_URL ausente - modo somente-Postgres');
       return;
     }
 
@@ -56,7 +56,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.keyExpired$.next(key);
     });
 
-    this.logger.log('redis conectado — holds de assentos ativos');
+    this.logger.log('redis conectado - holds de assentos ativos');
   }
 
   async onModuleDestroy() {
