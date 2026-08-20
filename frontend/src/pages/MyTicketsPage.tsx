@@ -6,6 +6,17 @@ import { Timer, QrCode, Barcode as BarcodeIcon, CreditCard } from 'lucide-react'
 import type { Reservation, Ticket } from '../api/types';
 import { api, formatBRL, formatDateTime } from '../api/client';
 import { Badge, Poster, Spinner } from '../components/ui';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -96,7 +107,22 @@ function Barcode({ code, className = '' }: { code: string; className?: string })
 }
 
 function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean }) {
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
   const shareUrl = `${window.location.origin}/t/${ticket.code}`;
+
+  const cancel = useMutation({
+    mutationFn: async () => {
+      await api.delete(`/reservations/${ticket.reservationId}`);
+    },
+    onSuccess: () => {
+      setConfirming(false);
+      void queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      void queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      void queryClient.invalidateQueries({ queryKey: ['seats'] });
+      void queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
 
   // forma de pagamento aprovada da reserva que gerou este ingresso
   const payment = ticket.reservation?.payments[0];
@@ -178,6 +204,39 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
             >
               Copiar link
             </Button>
+            {ticket.status === 'VALID' && (
+              <AlertDialog open={confirming} onOpenChange={setConfirming}>
+                <AlertDialogTrigger render={<Button variant="outline" size="xs" />}>
+                  {cancel.isPending ? 'Cancelando…' : 'Cancelar e estornar'}
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancelar e estornar?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta compra será cancelada e o valor de{' '}
+                      <strong>{formatBRL(ticket.priceCents ?? 0)}</strong> devolvido
+                      pela forma de pagamento original
+                      {paymentLabel ? ` (${paymentLabel.toLowerCase()})` : ''}. Todos
+                      os ingressos desta compra perdem a validade. Essa ação não
+                      pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel size="sm" disabled={cancel.isPending}>
+                      Voltar
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      size="sm"
+                      disabled={cancel.isPending}
+                      onClick={() => cancel.mutate()}
+                    >
+                      {cancel.isPending ? 'Cancelando…' : 'Confirmar estorno'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       </div>

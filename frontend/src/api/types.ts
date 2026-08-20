@@ -118,7 +118,7 @@ export interface Reservation {
 
 export interface Payment {
   id: string;
-  status: 'APPROVED' | 'DECLINED';
+  status: 'APPROVED' | 'DECLINED' | 'REFUNDED';
   cardBrand: string;
   cardLast4: string;
   amountCents: number;
@@ -130,6 +130,7 @@ export type TicketKind = 'FULL' | 'HALF';
 export interface Ticket {
   id: string;
   code: string;
+  reservationId: string;
   seatLabel: string | null;
   quantity: number;
   kind?: TicketKind;
