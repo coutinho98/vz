@@ -22,6 +22,7 @@ export default function GateCheckPage() {
   const [manualCode, setManualCode] = useState('');
   const [last, setLast] = useState<LastCheck | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
+  const [diag, setDiag] = useState<string[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   const { data: event } = useQuery<EventItem>({
@@ -100,6 +101,12 @@ export default function GateCheckPage() {
     setCamError(null);
     setLast(null);
     setStarting(true);
+    const log = (msg: string) => {
+      setDiag((d) => [...d.slice(-8), msg]);
+      console.log('[qr]', msg);
+    };
+
+    setDiag(['iniciando…']);
 
     if (typeof window !== 'undefined' && (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia)) {
       setStarting(false);
@@ -120,30 +127,48 @@ export default function GateCheckPage() {
       }
     };
 
-    try {
-      // no iOS o facingMode costuma falhar: enumera as câmeras (isso também
-      // dispara o prompt de permissão corretamente) e usa o ID da traseira
-      let cameraId: string | null = null;
-      try {
-        const cameras = await Html5Qrcode.getCameras();
-        const back = cameras.find((c) =>
-          /back|rear|traseira|environment|arrière/i.test(c.label),
-        );
-        cameraId = back?.id ?? (cameras.length ? cameras[cameras.length - 1].id : null);
-      } catch (err) {
-        // se a enumeração falhou por permissão negada, esse é o erro real
-        const name = err instanceof Error ? err.name : '';
-        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') throw err;
-      }
+    // tentativa 1 direto com facingMode (já dispara o prompt de permissão);
+    // enumeração de deviceId só como segunda estratégia, pra evitar a corrida
+    // de abrir/fechar stream que o getCameras() causa no ios
+    const attempts: { label: string; camera: string | { facingMode: string } }[] = [
+      { label: 'camera: environment', camera: { facingMode: 'environment' } },
+    ];
 
-      try {
-        await startScanner(cameraId ?? { facingMode: 'environment' }, onScan);
-      } catch (err) {
-        if (!cameraId) throw err;
-        await resetScanner();
-        await startScanner({ facingMode: 'environment' }, onScan);
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      log(`${cameras.length} câmera(s): ${cameras.map((c) => c.label || '?').join(' | ')}`);
+      const back = cameras.find((c) =>
+        /back|rear|traseira|environment|arrière/i.test(c.label),
+      );
+      if (back?.id) attempts.unshift({ label: `camera: id ${back.label}`, camera: back.id });
+    } catch (err) {
+      const name = err instanceof Error ? err.name : '';
+      log(`enumeração falhou: ${name || String(err)}`);
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        setStarting(false);
+        setCamError(cameraErrorMessage(err));
+        return;
       }
-      setCameraOn(true);
+    }
+
+    try {
+      let lastErr: unknown = null;
+      for (const attempt of attempts) {
+        try {
+          log(`tentando ${attempt.label}…`);
+          await resetScanner();
+          await startScanner(attempt.camera, onScan);
+          log('stream ativo ✓');
+          setCameraOn(true);
+          return;
+        } catch (err) {
+          lastErr = err;
+          const name = err instanceof Error ? err.name : '';
+          log(`${attempt.label} falhou: ${name || String(err)}`);
+          if (name === 'NotAllowedError' || name === 'PermissionDeniedError') throw err;
+        }
+      }
+      throw lastErr;
     } catch (err) {
       setCamError(cameraErrorMessage(err));
     } finally {
@@ -220,6 +245,18 @@ export default function GateCheckPage() {
           </div>
           {camError && (
             <p className="font-mono text-xs text-destructive">{camError}</p>
+          )}
+          {(diag.length > 0 || starting) && (
+            <div className="rounded border border-black/30 bg-muted/40 p-2">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                diagnóstico da câmera
+              </p>
+              {diag.map((line, i) => (
+                <p key={i} className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                  {line}
+                </p>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
