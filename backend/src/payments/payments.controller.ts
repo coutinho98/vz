@@ -8,6 +8,16 @@ import { PaymentsService } from './payments.service';
 export class PaymentsController {
   constructor(private paymentsService: PaymentsService) {}
 
+  // gera o instrumento (codigo pix / linha de boleto) sem confirmar
+  @Post('reservations/:id/intent')
+  createIntent(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PayReservationDto,
+  ) {
+    return this.paymentsService.createIntent(user, id, dto);
+  }
+
   @Post('reservations/:id')
   pay(
     @CurrentUser() user: AuthUser,

@@ -1,3 +1,4 @@
+import { randomBytes, randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ForbiddenException,
@@ -39,6 +40,36 @@ const STRIPE_TEST_DECLINES: Record<string, { code: string; message: string }> = 
   },
 };
 
+// gera um "copia e cola" de pix plausivel (nao valido de verdade)
+function fakePixPayload(reservationId: string, cents: number) {
+  const amount = cents.toFixed(2).padStart(10, '0');
+  return (
+    `00020126580014BR.GOV.BCB.PIX0136${randomUUID()}` +
+    `5204000053039865405${amount}` +
+    `5802BR5915VZ INGRESSOS6009SAO PAULO` +
+    `62070503${reservationId.slice(0, 5).toUpperCase()}` +
+    `6304${randomBytes(2).toString('hex').toUpperCase()}`
+  );
+}
+
+// linha digitavel de boleto com cara de verdade (44 digitos)
+function fakeBoletoCode(cents: number) {
+  const amount = cents.toFixed(2).replace(/\D/g, '').padStart(10, '0');
+  const body = `34191${randomInt(4)}${amount}` + randomDigits(25);
+  return body + randomDigits(44 - body.length);
+}
+
+function randomDigits(n: number) {
+  return Array.from(randomBytes(n))
+    .map((b) => b % 10)
+    .join('')
+    .slice(0, n);
+}
+
+function randomInt(n: number) {
+  return String(Math.floor(Math.random() * 10 ** n)).padStart(n, '0');
+}
+
 @Injectable()
 export class PaymentsService {
   constructor(
@@ -47,6 +78,37 @@ export class PaymentsService {
     private ticketsService: TicketsService,
     private hold: SeatsHoldService,
   ) {}
+
+  // gera o "instrumento" de pagamento sem confirmar nada (pix/boleto)
+  async createIntent(user: AuthUser, reservationId: string, dto: PayReservationDto) {
+    const reservation = await this.getPayableReservation(user, reservationId);
+    const method = dto.method ?? 'card';
+
+    if (method === 'pix') {
+      const code = fakePixPayload(reservation.id, reservation.totalCents);
+      return {
+        method,
+        pixCode: code,
+        expiresAt: new Date(reservation.expiresAt).toISOString(),
+        amountCents: reservation.totalCents,
+      };
+    }
+
+    if (method === 'boleto') {
+      return {
+        method,
+        boletoCode: fakeBoletoCode(reservation.totalCents),
+        boletoFormatted: fakeBoletoCode(reservation.totalCents).replace(
+          /(\d{5})(\d{5})(\d{5})(\d{6})(\d{5})(\d{6})(\d{1})(\d{12})/,
+          '$1.$2 $3.$4 $5.$6 $7 $8',
+        ),
+        expiresAt: new Date(reservation.expiresAt).toISOString(),
+        amountCents: reservation.totalCents,
+      };
+    }
+
+    throw new BadRequestException('Intent disponível apenas para pix ou boleto');
+  }
 
   async pay(user: AuthUser, reservationId: string, dto: PayReservationDto) {
     await this.reservationsService.expireStale();
@@ -64,6 +126,45 @@ export class PaymentsService {
     }
     if (reservation.status === 'CONFIRMED') {
       throw new BadRequestException('Reserva já foi paga');
+    }
+
+    const method = dto.method ?? 'card';
+
+    if (method === 'card') {
+      return this.payWithCard(reservation, dto);
+    }
+    // pix/boleto: a "confirmacao" chega aqui como se fosse o webhook do PSP
+    return this.approve(reservation, method, method === 'pix' ? 'Pix' : 'Boleto');
+  }
+
+  private async getPayableReservation(user: AuthUser, reservationId: string) {
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id: reservationId },
+    });
+    if (!reservation) throw new NotFoundException('Reserva não encontrada');
+    if (reservation.userId !== user.id) {
+      throw new ForbiddenException('Esta reserva não pertence a você');
+    }
+    if (reservation.status !== 'PENDING') {
+      throw new BadRequestException('Reserva não está pendente');
+    }
+    return reservation;
+  }
+
+  private async payWithCard(
+    reservation: {
+      id: string;
+      eventId: string;
+      userId: string;
+      quantity: number;
+      halfCount?: number;
+      totalCents: number;
+      seats: { id: string }[];
+    },
+    dto: PayReservationDto,
+  ) {
+    if (!dto.cardHolder || !dto.cardNumber || !dto.expiry || !dto.cvv) {
+      throw new BadRequestException('Preencha todos os dados do cartão');
     }
 
     const decline = STRIPE_TEST_DECLINES[dto.cardNumber];
@@ -89,13 +190,32 @@ export class PaymentsService {
       };
     }
 
+    return this.approve(reservation, 'card', brand, last4);
+  }
+
+  // confirma o pagamento, emite ingressos e libera os locks do redis
+  private async approve(
+    reservation: {
+      id: string;
+      eventId: string;
+      userId: string;
+      quantity: number;
+      halfCount?: number;
+      totalCents: number;
+      seats: { id: string }[];
+    },
+    method: string,
+    brand: string,
+    last4?: string,
+  ) {
     const payment = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
           reservationId: reservation.id,
           status: 'APPROVED',
+          method,
           cardBrand: brand,
-          cardLast4: last4,
+          cardLast4: last4 ?? null,
           amountCents: reservation.totalCents,
         },
       });

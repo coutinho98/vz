@@ -1,0 +1,62 @@
+# Variante para maquinas onde o daemon docker roda sem bridge/iptables
+# (storage vfs + "bridge": "none"). Usa network_mode: host e portas
+# alternativas porque 3000/5173/5432/6379 costumam estar ocupadas localmente.
+# Uso: docker compose -f docker-compose.host.yml up --build
+services:
+  db:
+    image: postgres:16-alpine
+    network_mode: host
+    command: ['-p', '5433']
+    environment:
+      POSTGRES_USER: vz
+      POSTGRES_PASSWORD: vz
+      POSTGRES_DB: vz
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vz -d vz -p 5433']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    network_mode: host
+    command: ['redis-server', '--port', '6380', '--notify-keyspace-events', 'Ex']
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -p 6380 ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      network: host
+    network_mode: host
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://vz:vz@localhost:5433/vz?schema=public
+      REDIS_URL: redis://localhost:6380
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && node dist/src/main.js"
+
+  web:
+    build:
+      context: ./frontend
+      network: host
+      args:
+        VITE_API_URL: http://localhost:3000/api
+    network_mode: host
+    command: ['npx', 'vite', 'preview', '--host', '0.0.0.0', '--port', '5174']
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

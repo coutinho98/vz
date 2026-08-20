@@ -153,6 +153,15 @@ export interface PublicTicket {
   holderFirstName: string;
 }
 
+export interface PayIntent {
+  method: 'pix' | 'boleto';
+  pixCode?: string;
+  boletoCode?: string;
+  boletoFormatted?: string;
+  expiresAt: string;
+  amountCents: number;
+}
+
 export interface PayResponse {
   outcome: 'APPROVED' | 'DECLINED';
   declineCode?: string;

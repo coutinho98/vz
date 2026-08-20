@@ -87,8 +87,9 @@ model Payment {
   reservationId String
   reservation   Reservation @relation(fields: [reservationId], references: [id])
   status        String // APPROVED | DECLINED
+  method        String      @default("card") // card | pix | boleto
   cardBrand     String
-  cardLast4     String
+  cardLast4     String?
   amountCents   Int
   createdAt     DateTime    @default(now())
 
