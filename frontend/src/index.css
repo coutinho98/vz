@@ -93,14 +93,20 @@
   }
 }
 
-/* leitor qr da portaria: no ios o video injetado pela lib colapsa sem
-   altura explicita - garante frame sempre visivel e cobrindo o container */
+/* leitor qr da portaria: host absoluto; video precisa preencher
+   (ios nao define altura sozinho e colapsa) */
+#qr-reader {
+  position: absolute;
+  inset: 0;
+}
 #qr-reader video {
   display: block;
   width: 100% !important;
   height: 100% !important;
-  min-height: 320px;
   object-fit: cover;
+}
+#qr-reader img[alt='Info icon'] {
+  display: none;
 }
 #qr-reader canvas {
   display: none;

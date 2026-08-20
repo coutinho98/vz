@@ -24,6 +24,20 @@ export default function GateCheckPage() {
   const [camError, setCamError] = useState<string | null>(null);
   const [diag, setDiag] = useState<string[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+
+  // a lib injeta/cria DOM próprio dentro do host: esse div é criado fora do
+  // controle do react (sem children no jsx), senão o reconciler quebra com
+  // removeChild quando a lib reordena os nós
+  useEffect(() => {
+    const host = document.createElement('div');
+    host.id = 'qr-reader';
+    hostRef.current?.appendChild(host);
+    return () => {
+      host.remove();
+      hostRef.current = null;
+    };
+  }, []);
 
   const { data: event } = useQuery<EventItem>({
     queryKey: ['event', eventId],
@@ -224,20 +238,22 @@ export default function GateCheckPage() {
           </div>
 
           <div
-            id="qr-reader"
-            className={`relative overflow-hidden rounded border-2 ${
+            className={`relative min-h-[340px] overflow-hidden rounded border-2 ${
               cameraOn || starting
-                ? 'min-h-[340px] border-black bg-black'
+                ? 'border-black bg-black'
                 : 'border-dashed border-black/40 bg-muted/40'
             }`}
           >
+            {/* host da lib: react nunca põe nem remove filhos daqui */}
+            <div ref={hostRef} className="absolute inset-0" />
+
             {starting && !cameraOn && (
-              <p className="absolute inset-0 flex items-center justify-center font-mono text-xs uppercase tracking-widest text-white/80">
+              <p className="absolute inset-0 flex items-center justify-center bg-black font-mono text-xs uppercase tracking-widest text-white/80">
                 abrindo câmera…
               </p>
             )}
             {!cameraOn && !starting && (
-              <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+              <p className="absolute inset-0 flex items-center justify-center px-4 py-10 text-center text-sm text-muted-foreground">
                 Câmera desligada. Clique em “Ligar câmera” para escanear o ingresso
                 ou use a digitação manual abaixo.
               </p>
