@@ -55,7 +55,9 @@ export class ReservationsService implements OnModuleInit {
   async create(user: AuthUser, eventId: string, dto: CreateReservationDto) {
     await this.expireStale(eventId);
 
-    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+    });
     if (!event) throw new NotFoundException('Evento não encontrado');
     if (event.status !== 'PUBLISHED') {
       throw new BadRequestException('Evento não está publicado');
@@ -145,7 +147,16 @@ export class ReservationsService implements OnModuleInit {
         return tx.reservation.findUniqueOrThrow({
           where: { id: reservation.id },
           include: {
-            event: { select: { id: true, title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
+            event: {
+              select: {
+                id: true,
+                title: true,
+                venue: true,
+                city: true,
+                startsAt: true,
+                posterUrl: true,
+              },
+            },
             seats: { orderBy: [{ row: 'asc' }, { number: 'asc' }] },
           },
         });
@@ -175,7 +186,9 @@ export class ReservationsService implements OnModuleInit {
       });
       const used = sold._sum.quantity ?? 0;
       if (used + quantity > capacity) {
-        throw new ConflictException('Ingressos de pista esgotados para esta quantidade');
+        throw new ConflictException(
+          'Ingressos de pista esgotados para esta quantidade',
+        );
       }
 
       return tx.reservation.create({
@@ -188,7 +201,15 @@ export class ReservationsService implements OnModuleInit {
           expiresAt: new Date(Date.now() + HOLD_SECONDS * 1000),
         },
         include: {
-          event: { select: { title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
+          event: {
+            select: {
+              title: true,
+              venue: true,
+              city: true,
+              startsAt: true,
+              posterUrl: true,
+            },
+          },
         },
       });
     });
@@ -200,7 +221,16 @@ export class ReservationsService implements OnModuleInit {
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
       include: {
-        event: { select: { id: true, title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            venue: true,
+            city: true,
+            startsAt: true,
+            posterUrl: true,
+          },
+        },
         seats: { orderBy: [{ row: 'asc' }, { number: 'asc' }] },
       },
     });
@@ -211,7 +241,16 @@ export class ReservationsService implements OnModuleInit {
     const reservation = await this.prisma.reservation.findUnique({
       where: { id },
       include: {
-        event: { select: { id: true, title: true, venue: true, city: true, startsAt: true, posterUrl: true } },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            venue: true,
+            city: true,
+            startsAt: true,
+            posterUrl: true,
+          },
+        },
         seats: { orderBy: [{ row: 'asc' }, { number: 'asc' }] },
       },
     });
@@ -225,33 +264,84 @@ export class ReservationsService implements OnModuleInit {
   async cancel(user: AuthUser, reservationId: string) {
     const reservation = await this.prisma.reservation.findUnique({
       where: { id: reservationId },
-      include: { seats: { select: { id: true } } },
+      include: {
+        seats: { select: { id: true } },
+        event: { select: { startsAt: true } },
+        payments: {
+          where: { status: 'APPROVED' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
     });
     if (!reservation) throw new NotFoundException('Reserva não encontrada');
     if (reservation.userId !== user.id) {
       throw new ForbiddenException('Esta reserva não pertence a você');
     }
-    if (reservation.status !== 'PENDING') {
-      throw new BadRequestException('Apenas reservas pendentes podem ser canceladas');
+    if (reservation.status === 'CANCELLED') {
+      throw new BadRequestException('Reserva já foi cancelada');
+    }
+    if (reservation.status === 'CONFIRMED') {
+      if (reservation.event.startsAt.getTime() <= Date.now()) {
+        throw new BadRequestException(
+          'Não é possível cancelar: o evento já começou',
+        );
+      }
+      if (reservation.payments.length === 0) {
+        throw new BadRequestException(
+          'Reserva confirmada sem pagamento aprovado',
+        );
+      }
+      const used = await this.prisma.ticket.count({
+        where: { reservationId: reservation.id, status: 'USED' },
+      });
+      if (used > 0) {
+        throw new BadRequestException(
+          'Não é possível cancelar: algum ingresso desta compra já foi utilizado',
+        );
+      }
     }
 
-    await this.prisma.$transaction([
-      this.prisma.seat.updateMany({
+    const refunded = reservation.status === 'CONFIRMED';
+
+    await this.prisma.$transaction(async (tx) => {
+      if (refunded) {
+        // cancela ingressos ainda nao utilizados
+        await tx.ticket.updateMany({
+          where: { reservationId: reservation.id, status: 'VALID' },
+          data: { status: 'CANCELLED' },
+        });
+        // registro de estorno (valor negativo pra diferenciar do fluxo de venda)
+        const paidWith = reservation.payments[0];
+        await tx.payment.create({
+          data: {
+            reservationId: reservation.id,
+            status: 'REFUNDED',
+            method: paidWith.method,
+            cardBrand: paidWith.cardBrand,
+            cardLast4: paidWith.cardLast4,
+            amountCents: -reservation.totalCents,
+          },
+        });
+      }
+      // devolve assentos ao estoque (pista volta automaticamente:
+      // a capacidade conta apenas status PENDING | CONFIRMED)
+      await tx.seat.updateMany({
         where: { reservationId: reservation.id },
         data: { reservationId: null },
-      }),
-      this.prisma.reservation.update({
+      });
+      await tx.reservation.update({
         where: { id: reservation.id },
         data: { status: 'CANCELLED' },
-      }),
-    ]);
+      });
+    });
     await this.hold.release(
       reservation.eventId,
       reservation.seats.map((s) => s.id),
     );
     this.broadcast.broadcast(reservation.eventId);
 
-    return { cancelled: true };
+    return { cancelled: true, refunded };
   }
 
   async expireStale(eventId?: string): Promise<string[]> {

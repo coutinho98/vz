@@ -87,7 +87,7 @@ model Payment {
   id            String      @id @default(uuid())
   reservationId String
   reservation   Reservation @relation(fields: [reservationId], references: [id])
-  status        String // APPROVED | DECLINED
+  status        String // APPROVED | DECLINED | REFUNDED
   method        String      @default("card") // card | pix | boleto
   cardBrand     String
   cardLast4     String?
