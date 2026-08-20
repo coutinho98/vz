@@ -86,6 +86,15 @@ export class TicketsService {
             category: true,
           },
         },
+        reservation: {
+          select: {
+            payments: {
+              where: { status: 'APPROVED' },
+              select: { method: true, cardBrand: true, cardLast4: true },
+              take: 1,
+            },
+          },
+        },
       },
     });
   }

@@ -131,6 +131,13 @@ export interface Ticket {
   status: 'VALID' | 'USED' | 'CANCELLED';
   checkedInAt: string | null;
   createdAt: string;
+  reservation?: {
+    payments: {
+      method: 'card' | 'pix' | 'boleto';
+      cardBrand: string;
+      cardLast4: string | null;
+    }[];
+  };
   event: {
     title: string;
     venue: string;

@@ -2,7 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Timer } from 'lucide-react';
+import { Timer, QrCode, Barcode as BarcodeIcon, CreditCard } from 'lucide-react';
 import type { Reservation, Ticket } from '../api/types';
 import { api, formatBRL, formatDateTime } from '../api/client';
 import { Badge, Poster, Spinner } from '../components/ui';
@@ -98,6 +98,25 @@ function Barcode({ code, className = '' }: { code: string; className?: string })
 function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean }) {
   const shareUrl = `${window.location.origin}/t/${ticket.code}`;
 
+  // forma de pagamento aprovada da reserva que gerou este ingresso
+  const payment = ticket.reservation?.payments[0];
+  const paymentLabel =
+    payment?.method === 'pix'
+      ? 'Pix'
+      : payment?.method === 'boleto'
+        ? 'Boleto'
+        : payment
+          ? `${payment.cardBrand}${payment.cardLast4 ? ` ···· ${payment.cardLast4}` : ''}`
+          : null;
+  const paymentIcon =
+    payment?.method === 'pix' ? (
+      <QrCode className="size-3.5" aria-hidden />
+    ) : payment?.method === 'boleto' ? (
+      <BarcodeIcon className="size-3.5" aria-hidden />
+    ) : (
+      <CreditCard className="size-3.5" aria-hidden />
+    );
+
   return (
     <article
       className={`grid overflow-hidden rounded border-2 border-black bg-card shadow-md sm:grid-cols-[1fr_auto] ${
@@ -137,6 +156,12 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
               </span>
             )}
           </p>
+          {paymentLabel && (
+            <p className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+              {paymentIcon}
+              pago com {paymentLabel}
+            </p>
+          )}
           <div className="flex flex-wrap gap-2 pt-1.5">
             <Button variant="outline" size="xs" nativeButton={false} render={<Link to={`/t/${ticket.code}`} />}>
               Abrir ingresso
