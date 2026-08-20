@@ -42,7 +42,12 @@ npm run dev:web   # http://localhost:5173
 
 ### Contas de demonstração (senha `123456`)
 
-marina@vz.com, maria@vz.com, joao@vz.com e paulo@vz.com
+| Conta | Nome | Papel | O que faz |
+| --- | --- | --- | --- |
+| `marina@vz.com` | Marina Promoções | Organizadora | Cria eventos, sessões e acompanha vendas |
+| `maria@vz.com` | Maria Plateia | Cliente | Reserva assentos, paga e recebe ingressos |
+| `joao@vz.com` | João Camarote | Cliente | Segundo cliente para testar concorrência de assentos |
+| `paulo@vz.com` | Paulo Portaria | Portaria | Valida ingressos (câmera QR ou código manual) |
 
 ### Cartões de teste (padrão Stripe)
 
