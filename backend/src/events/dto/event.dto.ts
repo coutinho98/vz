@@ -37,6 +37,10 @@ export class CreateEventDto {
   @MinLength(2)
   venue: string;
 
+  @IsOptional()
+  @IsString()
+  room?: string | null;
+
   @IsString()
   @MinLength(2)
   city: string;
@@ -94,6 +98,10 @@ export class UpdateEventDto {
   @IsString()
   @MinLength(2)
   venue?: string;
+
+  @IsOptional()
+  @IsString()
+  room?: string | null;
 
   @IsOptional()
   @IsString()

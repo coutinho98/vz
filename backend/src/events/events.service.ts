@@ -37,7 +37,7 @@ export class EventsService {
     const past = dates.filter((d) => d.getTime() <= Date.now());
     if (past.length > 0) {
       throw new BadRequestException(
-        'Não é possível criar sessões no passado — verifique as datas',
+        'Não é possível criar sessões no passado - verifique as datas',
       );
     }
     const unique = [...new Set(dates.map((d) => d.getTime()))].map(
@@ -70,6 +70,7 @@ export class EventsService {
             description: dto.description,
             posterUrl: dto.posterUrl ?? null,
             venue: dto.venue,
+            room: dto.room ?? null,
             city: dto.city,
             startsAt,
             seatingMode: dto.seatingMode,
@@ -201,6 +202,7 @@ export class EventsService {
         sessions: sessions.map((s) => ({
           id: s.id,
           startsAt: s.startsAt,
+          room: s.room,
           status: s.status,
           sold: s._count.tickets,
         })),
@@ -220,7 +222,9 @@ export class EventsService {
     const availability = await this.availability(id, event);
 
     // busca outras sessões do mesmo filme pro seletor de horários
-    let sessions = [{ id: event.id, startsAt: event.startsAt }];
+    let sessions: { id: string; startsAt: Date; room?: string | null }[] = [
+      { id: event.id, startsAt: event.startsAt, room: event.room },
+    ];
     if (event.category === 'MOVIE') {
       sessions = await this.prisma.event.findMany({
         where: {
@@ -233,7 +237,7 @@ export class EventsService {
             : { title: event.title }),
         },
         orderBy: { startsAt: 'asc' },
-        select: { id: true, startsAt: true },
+        select: { id: true, startsAt: true, room: true },
       });
     }
 
@@ -293,15 +297,21 @@ export class EventsService {
       event.seats.map((s) => s.id),
     );
 
+    // Identifica a última fileira (ao fundo, área de fácil acesso/rampa) para PCD
+    const allRows = [...new Set(event.seats.map((s) => s.row))].sort();
+    const lastRow = allRows[allRows.length - 1] ?? 'A';
+
     const rows = new Map<
       string,
-      { id: string; number: number; status: 'FREE' | 'TAKEN' }[]
+      { id: string; number: number; isPcd: boolean; status: 'FREE' | 'TAKEN' }[]
     >();
     for (const seat of event.seats) {
       const list = rows.get(seat.row) ?? [];
+      const isPcd = seat.row === lastRow;
       list.push({
         id: seat.id,
         number: seat.number,
+        isPcd,
         status: seat.reservationId || held.has(seat.id) ? 'TAKEN' : 'FREE',
       });
       rows.set(seat.row, list);
@@ -310,6 +320,8 @@ export class EventsService {
     return {
       seatingMode: event.seatingMode,
       category: event.category,
+      room: event.room,
+      venue: event.venue,
       rows: [...rows.entries()].map(([row, seats]) => ({ row, seats })),
     };
   }

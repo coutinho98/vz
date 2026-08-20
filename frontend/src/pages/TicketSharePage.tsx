@@ -60,7 +60,7 @@ export default function TicketSharePage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Onde</span>
                 <span className="font-bold">
-                  {ticket.event.venue} · {ticket.event.city}
+                  {ticket.event.venue}{ticket.event.room ? ` (${ticket.event.room})` : ''} · {ticket.event.city}
                 </span>
               </div>
               <div className="flex justify-between">

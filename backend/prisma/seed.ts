@@ -108,6 +108,7 @@ async function main() {
       description:
         'Exibição especial em tela grande com som remasterizado. Paul Atreides se une aos Fremen para vingar sua casa e tentar impedir um futuro terrível.',
       venue: 'Cine Art Luz',
+      room: 'Sala 1',
       city: 'São Paulo',
       startsAt: daysFromNow(7, 20),
       seatingMode: 'SEATED' as const,
@@ -123,8 +124,9 @@ async function main() {
       catalogRef: 'show-coldplay',
       title: 'Coldplay - Music of the Spheres',
       description:
-        'Palco imersivo, pulseras luminosas e os maiores hits da banda em uma produção hipnótica.',
+        'Palco imersivo, pulseiras luminosas e os maiores hits da banda em uma produção hipnótica.',
       venue: 'Allianz Parque',
+      room: 'Pista & Cadeira Inferior',
       city: 'São Paulo',
       startsAt: daysFromNow(14, 21),
       seatingMode: 'SEATED' as const,
@@ -141,6 +143,7 @@ async function main() {
       description:
         'A rainha do funk em turnê pelos maiores estádios do país, com produção grandiosa e hits que dominaram as paradas.',
       venue: 'Estádio Nilton Santos',
+      room: 'Pista Premium',
       city: 'Rio de Janeiro',
       startsAt: daysFromNow(21, 20),
       seatingMode: 'STANDING' as const,
@@ -156,6 +159,7 @@ async function main() {
       description:
         'Clássico da ficção científica em exibição comentada com trilha ao vivo de sintetizadores.',
       venue: 'Cine Vila Lobos',
+      room: 'Sala 3 IMAX',
       city: 'São Paulo',
       startsAt: daysFromNow(10, 19),
       seatingMode: 'SEATED' as const,
@@ -173,6 +177,7 @@ async function main() {
       description:
         'O mestre da música brasileira em um show intimista: voz, violão e a história da MPB.',
       venue: 'Theatro Municipal',
+      room: 'Plateia Nobre',
       city: 'Belo Horizonte',
       startsAt: daysFromNow(30, 19),
       seatingMode: 'SEATED' as const,
@@ -188,6 +193,7 @@ async function main() {
       title: 'Alok - Festival Avenue',
       description: 'Set especial de 3 horas com convidados surpresa e o melhor do eletrônico mundial.',
       venue: 'Autódromo de Interlagos',
+      room: 'Arena Principal',
       city: 'São Paulo',
       startsAt: daysFromNow(45, 22),
       seatingMode: 'STANDING' as const,

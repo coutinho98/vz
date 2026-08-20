@@ -37,6 +37,7 @@ export interface EventAvailability {
 export interface EventSession {
   id: string;
   startsAt: string;
+  room?: string | null;
   status?: 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
   sold?: number;
 }
@@ -48,6 +49,7 @@ export interface EventItem {
   posterUrl: string | null;
   category: 'MOVIE' | 'SHOW';
   venue: string;
+  room?: string | null;
   city: string;
   startsAt: string;
   seatingMode: 'SEATED' | 'STANDING';
@@ -76,12 +78,15 @@ export interface EventsPage {
 export interface SeatMapSeat {
   id: string;
   number: number;
+  isPcd?: boolean;
   status: 'FREE' | 'TAKEN';
 }
 
 export interface SeatMap {
   seatingMode: 'SEATED' | 'STANDING';
   category: 'MOVIE' | 'SHOW';
+  room?: string | null;
+  venue?: string;
   rows: { row: string; seats: SeatMapSeat[] }[];
 }
 
@@ -103,6 +108,7 @@ export interface Reservation {
     id: string;
     title: string;
     venue: string;
+    room?: string | null;
     city: string;
     startsAt: string;
     posterUrl: string | null;
@@ -141,6 +147,7 @@ export interface Ticket {
   event: {
     title: string;
     venue: string;
+    room?: string | null;
     city: string;
     startsAt: string;
     posterUrl: string | null;

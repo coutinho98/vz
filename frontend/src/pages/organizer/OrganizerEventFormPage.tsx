@@ -17,6 +17,7 @@ interface EventForm {
   description: string;
   posterUrl: string | null;
   venue: string;
+  room: string;
   city: string;
   startsAt: string;
   price: string;
@@ -30,6 +31,7 @@ const emptyForm: EventForm = {
   description: '',
   posterUrl: null,
   venue: '',
+  room: '',
   city: '',
   startsAt: '',
   price: '',
@@ -95,6 +97,7 @@ export default function OrganizerEventFormPage() {
       description: event.description,
       posterUrl: event.posterUrl,
       venue: event.venue,
+      room: event.room ?? '',
       city: event.city,
       startsAt: toLocalDatetimeInput(event.startsAt),
       price: (event.priceCents / 100).toFixed(2).replace('.', ','),
@@ -102,6 +105,8 @@ export default function OrganizerEventFormPage() {
       seatsPerRow: String(event.seatsPerRow ?? 10),
       capacity: String(event.capacity ?? 500),
     });
+    setSessions([toLocalDatetimeInput(event.startsAt)]);
+    setCatalogRef(event.catalogRef ?? null);
     setCategory(event.category);
     setSeatingMode(event.seatingMode);
   }, [event]);
@@ -127,6 +132,7 @@ export default function OrganizerEventFormPage() {
           title: form.title,
           description: form.description,
           venue: form.venue,
+          room: form.room.trim() || undefined,
           city: form.city,
           startsAt: new Date(form.startsAt).toISOString(),
           priceCents,
@@ -140,6 +146,7 @@ export default function OrganizerEventFormPage() {
         description: form.description,
         posterUrl: form.posterUrl ?? undefined,
         venue: form.venue,
+        room: form.room.trim() || undefined,
         city: form.city,
         // filme em cartaz: cada sessão vira um evento próprio
         sessionsAt: sessions
@@ -303,18 +310,31 @@ export default function OrganizerEventFormPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="venue">Local (casa/teatro)</Label>
+                <Label htmlFor="venue">Local (cinema/teatro/arena)</Label>
                 <Input
                   id="venue"
+                  placeholder="ex.: Cine Art Luz, Allianz Parque"
                   value={form.venue}
                   onChange={(e) => setForm({ ...form, venue: e.target.value })}
                   required
                 />
               </div>
               <div className="space-y-1.5">
+                <Label htmlFor="room">
+                  Sala / Espaço <span className="font-normal text-xs text-muted-foreground">(opcional)</span>
+                </Label>
+                <Input
+                  id="room"
+                  placeholder={category === 'MOVIE' ? 'ex.: Sala 1, Sala 3D' : 'ex.: Palco Principal, Pista'}
+                  value={form.room}
+                  onChange={(e) => setForm({ ...form, room: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="city">Cidade</Label>
                 <Input
                   id="city"
+                  placeholder="ex.: São Paulo"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   required

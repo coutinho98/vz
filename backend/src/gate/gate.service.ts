@@ -106,12 +106,26 @@ export class GateService {
 
     const updated = await this.prisma.ticket.findUniqueOrThrow({
       where: { id: ticket.id },
-      include: { user: { select: { name: true } } },
+      include: {
+        user: { select: { name: true } },
+        seat: { select: { row: true } },
+        event: { select: { room: true } },
+      },
     });
 
+    // pcd = assento na última fileira do mapa (mesma regra da disponibilidade)
+    const seatRows = await this.prisma.seat.groupBy({
+      by: ['row'],
+      where: { eventId: ticket.eventId },
+    });
+    const lastRow = seatRows.map((s) => s.row).sort().pop();
+    const isPcdSeat = !!updated.seat && updated.seat.row === lastRow;
+    const roomPrefix = updated.event.room ? `${updated.event.room} · ` : '';
     return {
       status: 'VALID',
-      message: `Entrada liberada — ${updated.seatLabel ?? 'pista'}${
+      message: `Entrada liberada - ${roomPrefix}${updated.seatLabel ? `Assento ${updated.seatLabel}` : 'pista'}${
+        isPcdSeat ? ' · PCD: espaço acessível' : ''
+      }${
         updated.kind === 'HALF' ? ' · MEIA: verificar documento' : ''
       }.`,
       ticket: this.toTicketDto(updated),

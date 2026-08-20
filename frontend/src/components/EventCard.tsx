@@ -85,7 +85,7 @@ export default function EventCard({ event }: { event: EventItem }) {
             <p className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="size-3 shrink-0" aria-hidden />
               <span className="truncate">
-                {event.venue} · {event.city}
+                {event.venue}{event.room ? ` (${event.room})` : ''} · {event.city}
               </span>
             </p>
 

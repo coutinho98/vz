@@ -230,6 +230,9 @@ export default function EventDetailPage() {
                 <Badge tone="outline">
                   {event.seatingMode === 'SEATED' ? 'Assentos marcados' : 'Pista'}
                 </Badge>
+                <Badge tone="default" className="border-2 border-black bg-primary font-mono font-bold text-foreground">
+                  {event.room ?? (event.category === 'MOVIE' ? 'Sala 1' : 'Palco Principal')}
+                </Badge>
               </div>
 
               <h1 className="font-head text-2xl leading-tight tracking-tight sm:text-3xl">
@@ -246,7 +249,7 @@ export default function EventDetailPage() {
                     {event.sessionCount && event.sessionCount > 1 ? (
                       <>
                         <p className="text-sm">
-                          <strong>Em cartaz</strong> — escolha a sessão:
+                          <strong>Em cartaz</strong> - escolha a sessão:
                         </p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {event.sessions?.map((s) => {
@@ -255,21 +258,28 @@ export default function EventDetailPage() {
                               <Link
                                 key={s.id}
                                 to={`/eventos/${s.id}`}
-                                className={`border-2 border-black px-2 py-1 font-mono text-xs font-bold shadow-sm transition ${
+                                className={`inline-flex items-center gap-1.5 border-2 border-black px-2.5 py-1 font-mono text-xs font-bold shadow-sm transition ${
                                   active
                                     ? 'bg-primary'
                                     : 'bg-card hover:-translate-y-0.5 hover:shadow'
                                 }`}
                               >
-                                {new Intl.DateTimeFormat('pt-BR', {
-                                  weekday: 'short',
-                                  day: '2-digit',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
-                                  .format(new Date(s.startsAt))
-                                  .replace(/\./g, '')}
+                                <span>
+                                  {new Intl.DateTimeFormat('pt-BR', {
+                                    weekday: 'short',
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
+                                    .format(new Date(s.startsAt))
+                                    .replace(/\./g, '')}
+                                </span>
+                                {s.room && (
+                                  <span className="border-l border-black/30 pl-1 text-[10px] text-muted-foreground font-semibold">
+                                    {s.room}
+                                  </span>
+                                )}
                               </Link>
                             );
                           })}
@@ -279,6 +289,11 @@ export default function EventDetailPage() {
                       <p className="pt-1 text-sm">
                         <span className="capitalize">{weekday}</span>, {dateLong} ·{' '}
                         <strong>{time}</strong>
+                        {event.room && (
+                          <span className="ml-2 font-mono font-bold text-foreground">
+                            · {event.room}
+                          </span>
+                        )}
                       </p>
                     )}
                   </div>
@@ -288,7 +303,11 @@ export default function EventDetailPage() {
                     <MapPin className="size-4" aria-hidden />
                   </span>
                   <p className="pt-1 text-sm">
-                    <strong>{event.venue}</strong> · {event.city}
+                    <strong>{event.venue}</strong>
+                    <span className="ml-1.5 rounded-xs border border-black bg-primary/20 px-1.5 py-0.5 font-mono text-[11px] font-bold text-foreground">
+                      {event.room ?? (event.category === 'MOVIE' ? 'Sala 1' : 'Palco Principal')}
+                    </span>
+                    {' · '}{event.city}
                   </p>
                 </div>
               </div>
@@ -350,9 +369,16 @@ export default function EventDetailPage() {
       ) : (
         <Card>
           <CardContent className="space-y-5">
-            <h2 className="font-head text-lg">
-              {isSeated ? 'Escolha seus assentos' : 'Escolha a quantidade'}
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-head text-lg">
+                {isSeated ? 'Escolha seus assentos' : 'Escolha a quantidade'}
+              </h2>
+              {event.room && (
+                <span className="rounded border-2 border-black bg-primary px-2.5 py-0.5 font-mono text-xs font-bold text-foreground shadow-xs">
+                  {event.room}
+                </span>
+              )}
+            </div>
 
           {isSeated ? (
             seatMap ? (

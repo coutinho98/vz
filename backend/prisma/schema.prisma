@@ -30,6 +30,7 @@ model Event {
   category     String // MOVIE | SHOW
   catalogRef   String?
   venue        String
+  room         String?
   city         String
   startsAt     DateTime
   seatingMode  String // SEATED | STANDING

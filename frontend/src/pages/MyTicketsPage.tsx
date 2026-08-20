@@ -139,6 +139,7 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
           <h3 className="truncate font-head text-base leading-snug">{ticket.event.title}</h3>
           <p className="text-sm text-muted-foreground">
             {formatDateTime(ticket.event.startsAt)} · {ticket.event.venue}
+            {ticket.event.room ? ` (${ticket.event.room})` : ''}
           </p>
           <p className="text-sm">
             {ticket.seatLabel ? (
