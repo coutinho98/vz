@@ -107,7 +107,7 @@ export default function OrganizerEventsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        {sessions.slice(0, 3).map((s) => (
+                        {sessions.map((s) => (
                           <p key={s.id} className="flex items-center gap-1.5 font-mono text-xs">
                             <span
                               className={`inline-block size-2 shrink-0 border border-black ${
@@ -136,11 +136,6 @@ export default function OrganizerEventsPage() {
                             )}
                           </p>
                         ))}
-                        {sessions.length > 3 && (
-                          <p className="font-mono text-xs text-muted-foreground">
-                            +{sessions.length - 3} sessões
-                          </p>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="font-bold">{formatBRL(event.priceCents)}</TableCell>
