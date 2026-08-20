@@ -27,4 +27,4 @@ COPY --from=build /app/src ./src
 COPY prisma.config.ts tsconfig.json ./
 
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts && node dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
