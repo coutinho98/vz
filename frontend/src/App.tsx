@@ -11,6 +11,7 @@ import MyTicketsPage from './pages/MyTicketsPage';
 import TicketSharePage from './pages/TicketSharePage';
 import OrganizerEventsPage from './pages/organizer/OrganizerEventsPage';
 import OrganizerEventFormPage from './pages/organizer/OrganizerEventFormPage';
+import OrganizerAnalyticsPage from './pages/organizer/OrganizerAnalyticsPage';
 import GateEventsPage from './pages/gate/GateEventsPage';
 import { Spinner } from './components/ui';
 
@@ -41,6 +42,7 @@ export default function App() {
         <Route element={<RequireRole roles={['ORGANIZER']} />}>
           <Route path="/organizador" element={<OrganizerEventsPage />} />
           <Route path="/organizador/novo" element={<OrganizerEventFormPage />} />
+          <Route path="/organizador/analytics" element={<OrganizerAnalyticsPage />} />
           <Route path="/organizador/:id/editar" element={<OrganizerEventFormPage />} />
         </Route>
 

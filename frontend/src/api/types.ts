@@ -187,6 +187,47 @@ export interface PayResponse {
 
 export type CheckInStatus = 'VALID' | 'ALREADY_USED' | 'INVALID';
 
+export interface OrganizerStatsDay {
+  date: string;
+  tickets: number;
+  revenueCents: number;
+}
+
+export interface OrganizerStatsEvent {
+  id: string;
+  title: string;
+  startsAt: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+  capacity: number;
+  sold: number;
+  revenueCents: number;
+  occupancyPct: number;
+}
+
+export interface OrganizerStats {
+  totals: {
+    eventsTotal: number;
+    eventsPublished: number;
+    ticketsSold: number;
+    revenueCents: number;
+    checkins: number;
+  };
+  salesByDay: OrganizerStatsDay[];
+  eventsRanked?: OrganizerStatsEvent[];
+  topEvents?: OrganizerStatsEvent[];
+  paymentMethods: {
+    method: 'card' | 'pix' | 'boleto';
+    count: number;
+    amountCents: number;
+  }[];
+  ticketKinds: {
+    full: number;
+    half: number;
+    fullRevenueCents: number;
+    halfRevenueCents: number;
+  };
+}
+
 export interface CheckInResponse {
   status: CheckInStatus;
   reason?: 'NOT_FOUND' | 'WRONG_EVENT' | 'CANCELLED';

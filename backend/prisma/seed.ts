@@ -257,6 +257,8 @@ async function main() {
       seatId: seat.id,
       seatLabel: `${seat.row}${seat.number}`,
       quantity: 1,
+      kind: 'FULL',
+      priceCents: event.priceCents,
     })),
   });
 

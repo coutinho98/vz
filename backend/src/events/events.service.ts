@@ -214,6 +214,155 @@ export class EventsService {
     });
   }
 
+  // painel de analytics do organizador: agrega vendas, receita e check-ins
+  async stats(user: AuthUser) {
+    const events = await this.prisma.event.findMany({
+      where: { organizerId: user.id },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        startsAt: true,
+        seatingMode: true,
+        rowsCount: true,
+        seatsPerRow: true,
+        capacity: true,
+        priceCents: true,
+      },
+    });
+    const ids = events.map((e) => e.id);
+
+    const [tickets, payments] = await Promise.all([
+      ids.length
+        ? this.prisma.ticket.findMany({
+            where: { eventId: { in: ids }, status: { in: ['VALID', 'USED'] } },
+            select: {
+              eventId: true,
+              quantity: true,
+              kind: true,
+              priceCents: true,
+              createdAt: true,
+              checkedInAt: true,
+            },
+          })
+        : Promise.resolve([]),
+      ids.length
+        ? this.prisma.payment.findMany({
+            where: {
+              status: 'APPROVED',
+              reservation: { eventId: { in: ids } },
+            },
+            select: { method: true, amountCents: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const dayKey = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate(),
+      ).padStart(2, '0')}`;
+
+    // janela dos últimos 14 dias (inclusive hoje), já zerada
+    const salesByDay: { date: string; tickets: number; revenueCents: number }[] =
+      [];
+    const byDay = new Map<string, (typeof salesByDay)[number]>();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const entry = { date: dayKey(d), tickets: 0, revenueCents: 0 };
+      salesByDay.push(entry);
+      byDay.set(entry.date, entry);
+    }
+
+    const totals = { ticketsSold: 0, revenueCents: 0, checkins: 0 };
+    const ticketKinds = {
+      full: 0,
+      half: 0,
+      fullRevenueCents: 0,
+      halfRevenueCents: 0,
+    };
+    const byEvent = new Map<string, { sold: number; revenueCents: number }>();
+
+    // ingressos criados antes da coluna priceCents (e os do seed) ficaram com 0:
+    // deriva o preço unitário a partir do preço do evento
+    const eventPrice = new Map(events.map((e) => [e.id, e.priceCents]));
+    const unitPrice = (t: { eventId: string; kind: string; priceCents: number }) => {
+      if (t.priceCents > 0) return t.priceCents;
+      const base = eventPrice.get(t.eventId) ?? 0;
+      return t.kind === 'HALF' ? Math.round(base / 2) : base;
+    };
+
+    for (const t of tickets) {
+      const amount = unitPrice(t) * t.quantity;
+      totals.ticketsSold += t.quantity;
+      totals.revenueCents += amount;
+      if (t.checkedInAt) totals.checkins += t.quantity;
+      if (t.kind === 'HALF') {
+        ticketKinds.half += t.quantity;
+        ticketKinds.halfRevenueCents += amount;
+      } else {
+        ticketKinds.full += t.quantity;
+        ticketKinds.fullRevenueCents += amount;
+      }
+
+      const day = byDay.get(dayKey(t.createdAt));
+      if (day) {
+        day.tickets += t.quantity;
+        day.revenueCents += amount;
+      }
+
+      const ev = byEvent.get(t.eventId) ?? { sold: 0, revenueCents: 0 };
+      ev.sold += t.quantity;
+      ev.revenueCents += amount;
+      byEvent.set(t.eventId, ev);
+    }
+
+    const eventsRanked = events
+      .map((e) => {
+        const agg = byEvent.get(e.id) ?? { sold: 0, revenueCents: 0 };
+        const capacity =
+          e.seatingMode === 'SEATED'
+            ? (e.rowsCount ?? 0) * (e.seatsPerRow ?? 0)
+            : (e.capacity ?? 0);
+        return {
+          id: e.id,
+          title: e.title,
+          startsAt: e.startsAt,
+          status: e.status,
+          capacity,
+          sold: agg.sold,
+          revenueCents: agg.revenueCents,
+          occupancyPct:
+            capacity > 0 ? Math.round((agg.sold / capacity) * 100) : 0,
+        };
+      })
+      .sort((a, b) => b.revenueCents - a.revenueCents);
+
+    const methods = new Map<string, { count: number; amountCents: number }>();
+    for (const p of payments) {
+      const m = methods.get(p.method) ?? { count: 0, amountCents: 0 };
+      m.count += 1;
+      m.amountCents += p.amountCents;
+      methods.set(p.method, m);
+    }
+    const paymentMethods = ['card', 'pix', 'boleto']
+      .filter((m) => methods.has(m))
+      .map((m) => ({ method: m, ...methods.get(m)! }));
+
+    return {
+      totals: {
+        eventsTotal: events.length,
+        eventsPublished: events.filter((e) => e.status === 'PUBLISHED').length,
+        ...totals,
+      },
+      salesByDay,
+      eventsRanked,
+      paymentMethods,
+      ticketKinds,
+    };
+  }
+
   async detail(id: string) {
     await this.expireStaleReservations(id);
 

@@ -30,6 +30,12 @@ export class EventsController {
     return this.eventsService.listMine(user);
   }
 
+  @Roles('ORGANIZER')
+  @Get('mine/stats')
+  mineStats(@CurrentUser() user: AuthUser) {
+    return this.eventsService.stats(user);
+  }
+
   @Public()
   @Get()
   list(@Query() query: QueryEventsDto) {

@@ -54,8 +54,11 @@ export default function Layout() {
                 )}
                 {user?.role === 'ORGANIZER' && (
                   <>
-                    <NavLink to="/organizador" className={linkClass}>
+                    <NavLink to="/organizador" end className={linkClass}>
                       Meus eventos
+                    </NavLink>
+                    <NavLink to="/organizador/analytics" className={linkClass}>
+                      Analytics
                     </NavLink>
                     <NavLink to="/portaria" className={linkClass}>
                       Portaria
