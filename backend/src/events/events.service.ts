@@ -120,54 +120,10 @@ export class EventsService {
     const page = query.page ?? 1;
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-
-    let startsAtFilter: Prisma.DateTimeFilter = { gte: startOfToday };
-
-    if (query.timeframe === 'today') {
-      const endOfToday = new Date();
-      endOfToday.setHours(23, 59, 59, 999);
-      startsAtFilter = { gte: startOfToday, lte: endOfToday };
-    } else if (query.timeframe === 'weekend') {
-      const currentDay = startOfToday.getDay(); // 0 is Sunday, 5 is Friday, 6 is Saturday
-      const daysUntilFriday = (5 - currentDay + 7) % 7;
-      const startOfWeekend = new Date(startOfToday);
-      startOfWeekend.setDate(
-        startOfToday.getDate() + (currentDay === 0 || currentDay === 6 ? 0 : daysUntilFriday),
-      );
-      startOfWeekend.setHours(0, 0, 0, 0);
-
-      const endOfWeekend = new Date(startOfWeekend);
-      const daysUntilSunday = (7 - startOfWeekend.getDay()) % 7;
-      endOfWeekend.setDate(startOfWeekend.getDate() + (daysUntilSunday === 0 ? 0 : daysUntilSunday));
-      endOfWeekend.setHours(23, 59, 59, 999);
-
-      startsAtFilter = { gte: startOfToday, lte: endOfWeekend };
-    } else if (query.timeframe === 'week') {
-      const in7Days = new Date(startOfToday);
-      in7Days.setDate(startOfToday.getDate() + 7);
-      in7Days.setHours(23, 59, 59, 999);
-      startsAtFilter = { gte: startOfToday, lte: in7Days };
-    } else if (query.timeframe === 'month') {
-      const in30Days = new Date(startOfToday);
-      in30Days.setDate(startOfToday.getDate() + 30);
-      in30Days.setHours(23, 59, 59, 999);
-      startsAtFilter = { gte: startOfToday, lte: in30Days };
-    }
-
-    let priceFilter: Prisma.IntFilter | undefined = undefined;
-    if (query.minPriceCents !== undefined || query.maxPriceCents !== undefined) {
-      priceFilter = {
-        ...(query.minPriceCents !== undefined ? { gte: query.minPriceCents } : {}),
-        ...(query.maxPriceCents !== undefined ? { lte: query.maxPriceCents } : {}),
-      };
-    }
-
     const where: Prisma.EventWhereInput = {
       status: 'PUBLISHED',
-      startsAt: startsAtFilter,
+      startsAt: { gte: startOfToday },
       ...(query.category ? { category: query.category } : {}),
-      ...(query.seatingMode ? { seatingMode: query.seatingMode } : {}),
-      ...(priceFilter ? { priceCents: priceFilter } : {}),
       ...(query.city
         ? { city: { contains: query.city, mode: 'insensitive' } }
         : {}),
@@ -177,34 +133,16 @@ export class EventsService {
               { title: { contains: query.search, mode: 'insensitive' } },
               { venue: { contains: query.search, mode: 'insensitive' } },
               { city: { contains: query.search, mode: 'insensitive' } },
-              { description: { contains: query.search, mode: 'insensitive' } },
             ],
           }
         : {}),
     };
 
-    let orderBy: Prisma.EventOrderByWithRelationInput = { startsAt: 'asc' };
-    if (query.sortBy === 'price_asc') {
-      orderBy = { priceCents: 'asc' };
-    } else if (query.sortBy === 'price_desc') {
-      orderBy = { priceCents: 'desc' };
-    } else if (query.sortBy === 'title_asc') {
-      orderBy = { title: 'asc' };
-    }
-
-    const [events, distinctCities] = await Promise.all([
-      this.prisma.event.findMany({
-        where,
-        orderBy,
-        include: { organizer: { select: { name: true } } },
-      }),
-      this.prisma.event.findMany({
-        where: { status: 'PUBLISHED', startsAt: { gte: startOfToday } },
-        select: { city: true },
-        distinct: ['city'],
-        orderBy: { city: 'asc' },
-      }),
-    ]);
+    const events = await this.prisma.event.findMany({
+      where,
+      orderBy: { startsAt: 'asc' },
+      include: { organizer: { select: { name: true } } },
+    });
 
     const groups = new Map<string, typeof events>();
     for (const event of events) {
@@ -225,14 +163,11 @@ export class EventsService {
     });
 
     const total = items.length;
-    const availableCities = distinctCities.map((c) => c.city).filter(Boolean);
-
     return {
       items: items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
       page,
       totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
       total,
-      availableCities,
     };
   }
 

@@ -113,7 +113,7 @@ async function main() {
       venue: 'Cine Art Luz',
       room: 'Sala 1',
       city: 'São Paulo',
-      startsAt: daysFromNow(0, 20),
+      startsAt: daysFromNow(7, 20),
       seatingMode: 'SEATED' as const,
       rowsCount: 6,
       seatsPerRow: 10,

@@ -73,7 +73,6 @@ export interface EventsPage {
   page: number;
   totalPages: number;
   total: number;
-  availableCities?: string[];
 }
 
 export interface SeatMapSeat {
