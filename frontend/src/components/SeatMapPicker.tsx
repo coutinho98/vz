@@ -69,50 +69,52 @@ export default function SeatMapPicker({
     <div className="space-y-5">
       <StageHeader category={seatMap.category} room={seatMap.room} />
 
-      <div className="space-y-2">
-        {seatMap.rows.map((row) => {
-          const isRowPcd = row.row === lastRowLetter;
-          return (
-            <div key={row.row} className="flex items-center justify-center gap-1.5">
-              <span className="w-5 text-center font-head text-xs text-muted-foreground">
-                {row.row}
-              </span>
-              {row.seats.map((seat) => {
-                const isSelected = selected.has(seat.id);
-                const isTaken = seat.status === 'TAKEN';
-                const isPcd = seat.isPcd || isRowPcd;
+      <div className="overflow-x-auto py-2 -mx-2 px-2 sm:mx-0 sm:px-0">
+        <div className="min-w-fit space-y-2 mx-auto flex flex-col items-center">
+          {seatMap.rows.map((row) => {
+            const isRowPcd = row.row === lastRowLetter;
+            return (
+              <div key={row.row} className="flex items-center justify-center gap-1.5">
+                <span className="w-5 text-center font-head text-xs text-muted-foreground">
+                  {row.row}
+                </span>
+                {row.seats.map((seat) => {
+                  const isSelected = selected.has(seat.id);
+                  const isTaken = seat.status === 'TAKEN';
+                  const isPcd = seat.isPcd || isRowPcd;
 
-                let seatClass = 'bg-card hover:-translate-y-0.5 hover:shadow-sm';
-                if (isTaken) {
-                  seatClass = 'bg-muted text-muted-foreground cursor-not-allowed border-black/40';
-                } else if (isSelected) {
-                  seatClass = 'bg-primary shadow-sm text-foreground';
-                } else if (isPcd) {
-                  seatClass = 'bg-blue-100 text-blue-950 hover:-translate-y-0.5 hover:bg-blue-200 hover:shadow-sm';
-                }
+                  let seatClass = 'bg-card hover:-translate-y-0.5 hover:shadow-sm';
+                  if (isTaken) {
+                    seatClass = 'bg-muted text-muted-foreground cursor-not-allowed border-black/40';
+                  } else if (isSelected) {
+                    seatClass = 'bg-primary shadow-sm text-foreground';
+                  } else if (isPcd) {
+                    seatClass = 'bg-blue-100 text-blue-950 hover:-translate-y-0.5 hover:bg-blue-200 hover:shadow-sm';
+                  }
 
-                return (
-                  <button
-                    key={seat.id}
-                    disabled={isTaken}
-                    onClick={() => onToggle(seat.id)}
-                    title={`Fileira ${row.row} · Assento ${seat.number}${isPcd ? ' (PCD / Acessível)' : ''}${
-                      isTaken ? ' (ocupado)' : ''
-                    }`}
-                    aria-label={`Fileira ${row.row} Assento ${seat.number}${isPcd ? ' PCD' : ''}`}
-                    className={`relative flex h-7 w-7 items-center justify-center rounded-none border-2 border-black text-[11px] font-bold transition ${seatClass}`}
-                  >
-                    {isPcd && !isSelected && !isTaken ? (
-                      <span className="text-[12px] leading-none" title="Assento PCD">♿</span>
-                    ) : (
-                      seat.number
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
+                  return (
+                    <button
+                      key={seat.id}
+                      disabled={isTaken}
+                      onClick={() => onToggle(seat.id)}
+                      title={`Fileira ${row.row} · Assento ${seat.number}${isPcd ? ' (PCD / Acessível)' : ''}${
+                        isTaken ? ' (ocupado)' : ''
+                      }`}
+                      aria-label={`Fileira ${row.row} Assento ${seat.number}${isPcd ? ' PCD' : ''}`}
+                      className={`relative flex h-7 w-7 items-center justify-center rounded-none border-2 border-black text-[11px] font-bold transition ${seatClass}`}
+                    >
+                      {isPcd && !isSelected && !isTaken ? (
+                        <span className="text-[12px] leading-none" title="Assento PCD">♿</span>
+                      ) : (
+                        seat.number
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Legenda do Mapa */}

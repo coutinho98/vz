@@ -238,7 +238,7 @@ export default function GateCheckPage() {
           </div>
 
           <div
-            className={`relative min-h-[340px] overflow-hidden rounded border-2 ${
+            className={`relative min-h-[260px] sm:min-h-[320px] overflow-hidden rounded border-2 ${
               cameraOn || starting
                 ? 'border-black bg-black'
                 : 'border-dashed border-black/40 bg-muted/40'
@@ -253,14 +253,14 @@ export default function GateCheckPage() {
               </p>
             )}
             {!cameraOn && !starting && (
-              <p className="absolute inset-0 flex items-center justify-center px-4 py-10 text-center text-sm text-muted-foreground">
+              <p className="absolute inset-0 flex items-center justify-center px-4 py-8 text-center text-xs sm:text-sm text-muted-foreground">
                 Câmera desligada. Clique em “Ligar câmera” para escanear o ingresso
                 ou use a digitação manual abaixo.
               </p>
             )}
           </div>
           {camError && (
-            <p className="font-mono text-xs text-destructive">{camError}</p>
+            <p className="font-mono text-xs text-destructive break-words">{camError}</p>
           )}
           {(diag.length > 0 || starting) && (
             <div className="rounded border border-black/30 bg-muted/40 p-2">
@@ -268,7 +268,7 @@ export default function GateCheckPage() {
                 diagnóstico da câmera
               </p>
               {diag.map((line, i) => (
-                <p key={i} className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                <p key={i} className="font-mono text-[11px] leading-relaxed text-muted-foreground break-all">
                   {line}
                 </p>
               ))}
@@ -279,7 +279,7 @@ export default function GateCheckPage() {
 
       <Card>
         <CardContent className="space-y-3">
-          <h2 className="font-head">Digitação manual</h2>
+          <h2 className="font-head text-base sm:text-lg">Digitação manual</h2>
           <p className="font-mono text-xs text-muted-foreground">
             código do ingresso (ING-XXXXX-XXXXX) ou cole o link /t/…
           </p>
@@ -292,15 +292,17 @@ export default function GateCheckPage() {
                 checkIn.mutate(code);
               }
             }}
-            className="flex gap-2"
+            className="flex flex-col sm:flex-row gap-2"
           >
             <Input
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
               placeholder="ING-XXXXX-XXXXX"
-              className="flex-1 font-mono uppercase tracking-wider"
+              className="flex-1 font-mono uppercase tracking-wider text-xs sm:text-sm"
             />
-            <Button type="submit" disabled={checkIn.isPending || !manualCode.trim()}>Validar</Button>
+            <Button type="submit" disabled={checkIn.isPending || !manualCode.trim()} className="w-full sm:w-auto">
+              Validar
+            </Button>
           </form>
         </CardContent>
       </Card>

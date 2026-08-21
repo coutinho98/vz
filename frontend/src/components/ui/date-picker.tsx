@@ -163,8 +163,8 @@ export function DatePicker({
       </Popover.Trigger>
 
       <Popover.Portal>
-        <Popover.Positioner sideOffset={6} align="start" className="z-50">
-          <Popover.Popup className="w-80 rounded border-2 border-black bg-card p-4 text-card-foreground shadow-[4px_4px_0px_0px_#000] outline-none animate-in fade-in-0 zoom-in-95">
+        <Popover.Positioner sideOffset={6} align="start" collisionPadding={12} className="z-50">
+          <Popover.Popup className="w-[calc(100vw-2rem)] max-w-xs sm:w-80 rounded border-2 border-black bg-card p-3 sm:p-4 text-card-foreground shadow-[4px_4px_0px_0px_#000] outline-none animate-in fade-in-0 zoom-in-95">
             {/* Header do Mês / Ano */}
             <div className="flex items-center justify-between pb-3 border-b-2 border-black">
               <span className="font-head text-sm font-bold uppercase tracking-wider">
@@ -214,7 +214,7 @@ export function DatePicker({
                 return (
                   <span
                     key={`prev-${i}`}
-                    className="flex size-9 items-center justify-center font-mono text-xs text-muted-foreground/30 select-none"
+                    className="flex size-8 sm:size-9 items-center justify-center font-mono text-xs text-muted-foreground/30 select-none"
                   >
                     {dayNum}
                   </span>
@@ -241,7 +241,7 @@ export function DatePicker({
                     disabled={isPast}
                     onClick={() => handleSelectDay(dayNum)}
                     className={cn(
-                      'flex size-9 cursor-pointer items-center justify-center rounded font-mono text-xs font-bold transition-all duration-150',
+                      'flex size-8 sm:size-9 cursor-pointer items-center justify-center rounded font-mono text-xs font-bold transition-all duration-150',
                       isPast
                         ? 'cursor-not-allowed text-muted-foreground/30 select-none'
                         : isSelected

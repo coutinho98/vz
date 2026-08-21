@@ -137,8 +137,8 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
-      <div className="mt-6 overflow-hidden rounded border-2 border-black/40">
-        <table className="w-full border-collapse font-mono text-xs">
+      <div className="mt-6 overflow-x-auto rounded border-2 border-black/40">
+        <table className="w-full min-w-[280px] border-collapse font-mono text-xs">
           <thead>
             <tr className="bg-foreground text-background">
               <th className="px-3 py-1.5 text-left font-bold uppercase tracking-widest" colSpan={3}>

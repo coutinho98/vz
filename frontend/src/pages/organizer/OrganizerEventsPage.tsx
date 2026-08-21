@@ -106,51 +106,77 @@ export default function OrganizerEventsPage() {
       )}
 
       {events && events.length > 0 && (
-        <div className="overflow-x-auto rounded border-2 border-black bg-card shadow-md">
-          <Table className="min-w-[860px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Evento</TableHead>
-                <TableHead>Sessões</TableHead>
-                <TableHead>Preço</TableHead>
-                <TableHead>Vendidos</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {events.map((event) => {
-                const sessions = event.sessions ?? [];
-                const drafts = sessions.filter((s) => s.status === 'DRAFT');
-                const published = sessions.filter((s) => s.status === 'PUBLISHED');
-                const totalSold = sessions.reduce((sum, s) => sum + (s.sold ?? 0), 0);
-                const allDraft = drafts.length === sessions.length;
-                const allPublished = published.length === sessions.length;
+        <div className="space-y-4">
+          {/* Visualização em Cards para Mobile e Tablets pequenos (md:hidden) */}
+          <div className="space-y-4 md:hidden">
+            {events.map((event) => {
+              const sessions = event.sessions ?? [];
+              const drafts = sessions.filter((s) => s.status === 'DRAFT');
+              const published = sessions.filter((s) => s.status === 'PUBLISHED');
+              const totalSold = sessions.reduce((sum, s) => sum + (s.sold ?? 0), 0);
+              const allDraft = drafts.length === sessions.length;
+              const allPublished = published.length === sessions.length;
 
-                return (
-                  <TableRow key={event.id}>
-                    <TableCell>
-                      <p className="font-bold">{event.title}</p>
-                      <p className="font-mono text-xs text-muted-foreground">
-                        {event.venue} · {event.city} ·{' '}
-                        {event.seatingMode === 'SEATED'
-                          ? `${event.rowsCount}×${event.seatsPerRow}`
-                          : `pista ${event.capacity}p`}
+              return (
+                <div
+                  key={event.id}
+                  className="rounded border-2 border-black bg-card p-4 shadow-md space-y-3.5"
+                >
+                  {/* Cabeçalho do Card */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="font-head text-base sm:text-lg leading-snug">{event.title}</h2>
+                      <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                        {event.venue} · {event.city}
                       </p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {allDraft && <Badge tone="zinc">Não lançado</Badge>}
-                        {(event.sessionCount ?? 0) > 1 && (
-                          <Badge tone="outline">
-                            {event.sessionCount} sessões
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {sessions.map((s) => (
-                          <p key={s.id} className="flex items-center gap-1.5 font-mono text-xs">
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {event.seatingMode === 'SEATED'
+                          ? `Assentos marcados (${event.rowsCount}×${event.seatsPerRow})`
+                          : `Pista (capacidade ${event.capacity}p)`}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="border-2 border-black bg-primary px-2 py-0.5 font-head text-xs shadow-xs">
+                        {formatBRL(event.priceCents)}
+                      </span>
+                      {allDraft && <Badge tone="zinc">Não lançado</Badge>}
+                      {allPublished && <Badge tone="success">Publicado</Badge>}
+                    </div>
+                  </div>
+
+                  {/* Estatísticas rápidas */}
+                  <div className="flex items-center gap-3 rounded border border-black/20 bg-muted/40 px-3 py-2 text-xs">
+                    <div className="flex-1">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
+                        Ingressos vendidos
+                      </span>
+                      <strong className="font-head text-sm text-foreground">{totalSold}</strong>
+                    </div>
+                    <div className="border-l border-black/20 pl-3">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
+                        Sessões
+                      </span>
+                      <span className="font-mono font-bold text-xs">
+                        {sessions.length} {sessions.length === 1 ? 'sessão' : 'sessões'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Lista de Sessões */}
+                  <div className="space-y-1.5 border-t border-dashed border-black/20 pt-2.5">
+                    <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Horários e status:
+                    </p>
+                    <div className="space-y-1.5">
+                      {sessions.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-center justify-between gap-2 rounded border border-black/20 bg-background px-2.5 py-1.5 font-mono text-xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
                             <span
-                              className={`inline-block size-2 shrink-0 border border-black ${
+                              className={`inline-block size-2.5 shrink-0 border border-black ${
                                 s.status === 'PUBLISHED'
                                   ? 'bg-green-500'
                                   : s.status === 'DRAFT'
@@ -159,82 +185,225 @@ export default function OrganizerEventsPage() {
                               }`}
                               aria-hidden
                             />
-                            <span className={s.status === 'CANCELLED' ? 'text-muted-foreground line-through' : ''}>
+                            <span
+                              className={`truncate ${
+                                s.status === 'CANCELLED' ? 'text-muted-foreground line-through' : ''
+                              }`}
+                            >
                               {formatSessionDateTime(s.startsAt)}
                             </span>
-                            {s.status === 'PUBLISHED' && (
-                              <button
-                                type="button"
-                                aria-label={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
-                                title={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
-                                disabled={act.isPending}
-                                onClick={() => setCancelIds([s.id])}
-                                className="flex size-4 cursor-pointer items-center justify-center border border-black bg-card text-[9px] font-bold text-muted-foreground transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
-                              >
-                                ×
-                              </button>
+                            {s.sold !== undefined && s.sold > 0 && (
+                              <span className="text-[11px] text-muted-foreground">
+                                ({s.sold} vend.)
+                              </span>
                             )}
-                          </p>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-bold">{formatBRL(event.priceCents)}</TableCell>
-                    <TableCell>{totalSold}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {allDraft && (
-                          <>
-                            <Button
-                              size="xs"
-                              className="bg-green-500 hover:bg-green-600"
+                          </div>
+
+                          {s.status === 'PUBLISHED' && (
+                            <button
+                              type="button"
+                              aria-label={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
+                              title={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
                               disabled={act.isPending}
-                              onClick={() =>
-                                act.mutate({
-                                  ids: sessions.map((s) => s.id),
-                                  action: 'publish',
-                                })
-                              }
+                              onClick={() => setCancelIds([s.id])}
+                              className="flex size-6 shrink-0 cursor-pointer items-center justify-center border border-black bg-card text-xs font-bold text-muted-foreground transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
                             >
-                              Publicar {sessions.length > 1 ? 'todas' : ''}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="xs"
-                              nativeButton={false} render={<Link to={`/organizador/${event.id}/editar`} />}
-                            >
-                              Editar
-                            </Button>
-                          </>
-                        )}
-                        {published.length > 0 && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="xs"
-                              nativeButton={false} render={<Link to={`/portaria/${published[0].id}`} />}
-                            >
-                              Portaria
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="xs"
-                              disabled={act.isPending}
-                              onClick={() => setCancelIds(published.map((s) => s.id))}
-                            >
-                              Cancelar {published.length > 1 ? 'todas' : ''}
-                            </Button>
-                          </>
-                        )}
-                        {allPublished && (
-                          <Badge tone="success">Publicado</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Ações do Evento no Card */}
+                  <div className="flex flex-wrap gap-2 border-t-2 border-dashed border-black/20 pt-3">
+                    {allDraft && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-green-500 hover:bg-green-600 font-bold"
+                          disabled={act.isPending}
+                          onClick={() =>
+                            act.mutate({
+                              ids: sessions.map((s) => s.id),
+                              action: 'publish',
+                            })
+                          }
+                        >
+                          Publicar {sessions.length > 1 ? 'todas' : 'evento'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          nativeButton={false}
+                          render={<Link to={`/organizador/${event.id}/editar`} />}
+                        >
+                          Editar
+                        </Button>
+                      </>
+                    )}
+
+                    {published.length > 0 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 font-bold"
+                          nativeButton={false}
+                          render={<Link to={`/portaria/${published[0].id}`} />}
+                        >
+                          Abrir Portaria
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={act.isPending}
+                          onClick={() => setCancelIds(published.map((s) => s.id))}
+                        >
+                          Cancelar {published.length > 1 ? 'todas' : ''}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Visualização em Tabela para Desktop (hidden md:block) */}
+          <div className="hidden md:block">
+            <Table className="min-w-[760px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Evento</TableHead>
+                  <TableHead>Sessões</TableHead>
+                  <TableHead>Preço</TableHead>
+                  <TableHead>Vendidos</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {events.map((event) => {
+                  const sessions = event.sessions ?? [];
+                  const drafts = sessions.filter((s) => s.status === 'DRAFT');
+                  const published = sessions.filter((s) => s.status === 'PUBLISHED');
+                  const totalSold = sessions.reduce((sum, s) => sum + (s.sold ?? 0), 0);
+                  const allDraft = drafts.length === sessions.length;
+                  const allPublished = published.length === sessions.length;
+
+                  return (
+                    <TableRow key={event.id}>
+                      <TableCell>
+                        <p className="font-bold">{event.title}</p>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {event.venue} · {event.city} ·{' '}
+                          {event.seatingMode === 'SEATED'
+                            ? `${event.rowsCount}×${event.seatsPerRow}`
+                            : `pista ${event.capacity}p`}
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {allDraft && <Badge tone="zinc">Não lançado</Badge>}
+                          {(event.sessionCount ?? 0) > 1 && (
+                            <Badge tone="outline">
+                              {event.sessionCount} sessões
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {sessions.map((s) => (
+                            <p key={s.id} className="flex items-center gap-1.5 font-mono text-xs">
+                              <span
+                                className={`inline-block size-2 shrink-0 border border-black ${
+                                  s.status === 'PUBLISHED'
+                                    ? 'bg-green-500'
+                                    : s.status === 'DRAFT'
+                                      ? 'bg-yellow-400'
+                                      : 'bg-destructive'
+                                }`}
+                                aria-hidden
+                              />
+                              <span className={s.status === 'CANCELLED' ? 'text-muted-foreground line-through' : ''}>
+                                {formatSessionDateTime(s.startsAt)}
+                              </span>
+                              {s.status === 'PUBLISHED' && (
+                                <button
+                                  type="button"
+                                  aria-label={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
+                                  title={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
+                                  disabled={act.isPending}
+                                  onClick={() => setCancelIds([s.id])}
+                                  className="flex size-5 cursor-pointer items-center justify-center border border-black bg-card text-[10px] font-bold text-muted-foreground transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </p>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-bold">{formatBRL(event.priceCents)}</TableCell>
+                      <TableCell>{totalSold}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {allDraft && (
+                            <>
+                              <Button
+                                size="xs"
+                                className="bg-green-500 hover:bg-green-600"
+                                disabled={act.isPending}
+                                onClick={() =>
+                                  act.mutate({
+                                    ids: sessions.map((s) => s.id),
+                                    action: 'publish',
+                                  })
+                                }
+                              >
+                                Publicar {sessions.length > 1 ? 'todas' : ''}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                nativeButton={false}
+                                render={<Link to={`/organizador/${event.id}/editar`} />}
+                              >
+                                Editar
+                              </Button>
+                            </>
+                          )}
+                          {published.length > 0 && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                nativeButton={false}
+                                render={<Link to={`/portaria/${published[0].id}`} />}
+                              >
+                                Portaria
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="xs"
+                                disabled={act.isPending}
+                                onClick={() => setCancelIds(published.map((s) => s.id))}
+                              >
+                                Cancelar {published.length > 1 ? 'todas' : ''}
+                              </Button>
+                            </>
+                          )}
+                          {allPublished && (
+                            <Badge tone="success">Publicado</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 

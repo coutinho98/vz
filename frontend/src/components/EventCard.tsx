@@ -36,9 +36,9 @@ export default function EventCard({ event }: { event: EventItem }) {
       className="group block h-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
     >
       <Card className="relative h-full overflow-hidden p-0 transition-all duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-lg">
-        <div className="flex h-full">
+        <div className="flex h-full min-h-[180px] sm:min-h-[200px]">
           <div
-            className={`relative w-24 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-36 ${
+            className={`relative w-28 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-36 ${
               soldOut ? 'grayscale' : ''
             }`}
           >
@@ -46,10 +46,10 @@ export default function EventCard({ event }: { event: EventItem }) {
               src={event.posterUrl}
               alt={event.title}
               genre={event.category === 'SHOW' ? 'ao vivo' : 'cinema'}
-              className="h-full border-0 object-cover"
+              className="h-full w-full object-cover"
             />
 
-            <div className="absolute left-1 top-1 flex size-10 flex-col items-center justify-center border-2 border-black bg-primary text-primary-foreground shadow-sm sm:left-1.5 sm:top-1.5 sm:size-12">
+            <div className="absolute left-1.5 top-1.5 flex size-10 flex-col items-center justify-center border-2 border-black bg-primary text-primary-foreground shadow-sm sm:size-12">
               <span className="font-head text-sm leading-none sm:text-lg">{day}</span>
               <span className="font-mono text-[8px] font-bold uppercase tracking-widest sm:text-[9px]">
                 {month}
@@ -67,14 +67,14 @@ export default function EventCard({ event }: { event: EventItem }) {
 
           <span
             aria-hidden
-            className="absolute left-24 top-0 z-10 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
+            className="absolute left-28 top-0 z-10 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
           />
           <span
             aria-hidden
-            className="absolute bottom-0 left-24 z-10 size-5 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
+            className="absolute bottom-0 left-28 z-10 size-5 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
           />
 
-          <CardContent className="flex min-w-0 flex-1 flex-col gap-1.5 py-3">
+          <CardContent className="flex min-w-0 flex-1 flex-col justify-between gap-1.5 p-3 sm:p-4">
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge tone={event.category === 'SHOW' ? 'default' : 'secondary'}>
                 {event.category === 'SHOW' ? 'Show' : 'Filme'}

@@ -21,7 +21,15 @@ function posterSeed(alt: string) {
 }
 
 // poster tipográfico pra shows ou itens sem imagem
-function TypographicPoster({ title, genre }: { title: string; genre?: string }) {
+function TypographicPoster({
+  title,
+  genre,
+  className = '',
+}: {
+  title: string;
+  genre?: string;
+  className?: string;
+}) {
   const theme = POSTER_THEMES[posterSeed(title) % POSTER_THEMES.length];
   const words = title.replace(/[—–-]/g, ' ').split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -39,21 +47,24 @@ function TypographicPoster({ title, genre }: { title: string; genre?: string }) 
 
   return (
     <div
-      className={`flex aspect-[2/3] w-full flex-col justify-between border-2 border-black p-3 ${theme.bg} ${theme.ink}`}
+      className={cn(
+        `flex h-full w-full flex-col justify-between p-2.5 sm:p-3 ${theme.bg} ${theme.ink}`,
+        className,
+      )}
     >
       <div className="flex flex-1 flex-col justify-center">
         {lines.slice(0, 4).map((line, i) => (
           <span
             key={i}
             className="font-head uppercase leading-[0.95] tracking-tight"
-            style={{ fontSize: `clamp(1rem, ${18 / Math.max(line.length, 6)}em, 2.6rem)` }}
+            style={{ fontSize: `clamp(0.85rem, ${16 / Math.max(line.length, 6)}em, 2.2rem)` }}
           >
             {line}
           </span>
         ))}
       </div>
       {genre && (
-        <p className="border-t-2 border-current/40 pt-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em]">
+        <p className="border-t-2 border-current/40 pt-1 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em]">
           {genre}
         </p>
       )}
@@ -80,7 +91,7 @@ export function Poster({
 
   if (src) {
     return (
-      <div className={cn('relative h-full w-full', className)}>
+      <div className={cn('relative h-full w-full overflow-hidden bg-muted', className)}>
         {/* camada borrada de baixo: aparece imediatamente */}
         <img
           src={lqipUrl(src)}
@@ -105,7 +116,7 @@ export function Poster({
       </div>
     );
   }
-  return <TypographicPoster title={alt} genre={genre} />;
+  return <TypographicPoster title={alt} genre={genre} className={className} />;
 }
 
 export function Spinner({ label = 'Carregando…' }: { label?: string }) {

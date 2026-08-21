@@ -137,7 +137,7 @@ export default function GateEventsPage() {
 
       {/* Barra de Busca e Filtros */}
       <div className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           {/* Campo de Busca */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -159,9 +159,10 @@ export default function GateEventsPage() {
           </div>
 
           {/* Filtros de Categoria */}
-          <div className="flex gap-1.5">
+          <div className="flex w-full sm:w-auto gap-1.5">
             <Button
               size="sm"
+              className="flex-1 sm:flex-none font-bold"
               variant={categoryFilter === 'all' ? 'default' : 'outline'}
               onClick={() => setCategoryFilter('all')}
             >
@@ -169,6 +170,7 @@ export default function GateEventsPage() {
             </Button>
             <Button
               size="sm"
+              className="flex-1 sm:flex-none font-bold"
               variant={categoryFilter === 'MOVIE' ? 'default' : 'outline'}
               onClick={() => setCategoryFilter('MOVIE')}
             >
@@ -176,6 +178,7 @@ export default function GateEventsPage() {
             </Button>
             <Button
               size="sm"
+              className="flex-1 sm:flex-none font-bold"
               variant={categoryFilter === 'SHOW' ? 'default' : 'outline'}
               onClick={() => setCategoryFilter('SHOW')}
             >
@@ -184,12 +187,13 @@ export default function GateEventsPage() {
           </div>
         </div>
 
-        {/* Filtros Temporais */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-b border-black/10 pb-3">
+        {/* Filtros Temporais com rolagem horizontal suave no mobile */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 pt-1 border-b border-black/10 -mx-1 px-1 sm:mx-0 sm:px-0">
           <Button
             size="xs"
             variant={timeFilter === 'all' ? 'default' : 'outline'}
             onClick={() => setTimeFilter('all')}
+            className="shrink-0"
           >
             Todos ({events?.length ?? 0})
           </Button>
@@ -197,7 +201,7 @@ export default function GateEventsPage() {
             size="xs"
             variant={timeFilter === 'today' ? 'default' : 'outline'}
             onClick={() => setTimeFilter('today')}
-            className={timeFilter === 'today' ? 'bg-green-300 text-black hover:bg-green-400' : ''}
+            className={`shrink-0 ${timeFilter === 'today' ? 'bg-green-300 text-black hover:bg-green-400' : ''}`}
           >
             Hoje ({counts.today})
           </Button>
@@ -205,6 +209,7 @@ export default function GateEventsPage() {
             size="xs"
             variant={timeFilter === 'upcoming' ? 'default' : 'outline'}
             onClick={() => setTimeFilter('upcoming')}
+            className="shrink-0"
           >
             Próximos ({counts.upcoming})
           </Button>
@@ -212,6 +217,7 @@ export default function GateEventsPage() {
             size="xs"
             variant={timeFilter === 'past' ? 'default' : 'outline'}
             onClick={() => setTimeFilter('past')}
+            className="shrink-0"
           >
             Encerrados ({counts.past})
           </Button>
@@ -224,7 +230,7 @@ export default function GateEventsPage() {
                 setTimeFilter('all');
                 setCategoryFilter('all');
               }}
-              className="ml-auto font-mono text-xs font-bold text-muted-foreground underline hover:text-foreground"
+              className="ml-auto shrink-0 font-mono text-xs font-bold text-muted-foreground underline hover:text-foreground pl-2"
             >
               Limpar filtros ×
             </button>
@@ -344,9 +350,9 @@ function GateEventCard({
               : 'border-2 border-black bg-card'
         }`}
       >
-        <div className="flex h-full min-h-[170px]">
-          {/* Pôster lateral grande e de destaque */}
-          <div className="relative w-28 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-36">
+        <div className="flex h-full min-h-[160px] sm:min-h-[170px]">
+          {/* Pôster lateral responsivo */}
+          <div className="relative w-24 shrink-0 overflow-hidden border-r-2 border-dashed border-black sm:w-36">
             <Poster
               src={event.posterUrl}
               alt={event.title}
@@ -354,7 +360,7 @@ function GateEventCard({
               className="h-full w-full object-cover"
             />
             {timeInfo.isToday && (
-              <div className="absolute left-1.5 top-1.5 border border-black bg-green-300 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-green-950 shadow-sm sm:text-[10px]">
+              <div className="absolute left-1 top-1 border border-black bg-green-300 px-1 py-0.5 font-mono text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-green-950 shadow-sm sm:left-1.5 sm:top-1.5 sm:px-1.5">
                 Hoje
               </div>
             )}
@@ -363,37 +369,37 @@ function GateEventCard({
           {/* Recortes semicirculares nas extremidades da divisória */}
           <span
             aria-hidden
-            className="absolute left-28 top-0 z-10 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
+            className="absolute left-24 top-0 z-10 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
           />
           <span
             aria-hidden
-            className="absolute bottom-0 left-28 z-10 size-4 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
+            className="absolute bottom-0 left-24 z-10 size-4 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-black bg-background sm:left-36"
           />
 
           {/* Conteúdo do bilhete da portaria */}
-          <CardContent className="flex min-w-0 flex-1 flex-col justify-between p-3.5 sm:p-4">
+          <CardContent className="flex min-w-0 flex-1 flex-col justify-between p-3 sm:p-4">
             <div className="space-y-1.5">
               {/* Badges e Horário */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Badge tone={event.category === 'SHOW' ? 'default' : 'secondary'} className="text-[10px]">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+                <Badge tone={event.category === 'SHOW' ? 'default' : 'secondary'} className="text-[9px] sm:text-[10px]">
                   {event.category === 'SHOW' ? 'Show' : 'Filme'}
                 </Badge>
-                <Badge tone="outline" className="text-[10px]">
+                <Badge tone="outline" className="text-[9px] sm:text-[10px]">
                   {event.seatingMode === 'SEATED' ? 'Assentos' : 'Pista'}
                 </Badge>
                 {timeInfo.isToday ? (
-                  <span className="font-mono text-xs font-bold text-green-700">
+                  <span className="font-mono text-[11px] sm:text-xs font-bold text-green-700">
                     {timeInfo.label}
                   </span>
                 ) : (
-                  <span className="font-mono text-xs font-bold text-muted-foreground">
+                  <span className="font-mono text-[11px] sm:text-xs font-bold text-muted-foreground">
                     {timeInfo.label}
                   </span>
                 )}
               </div>
 
               {/* Título do Evento */}
-              <h2 className="line-clamp-2 font-head text-base leading-snug sm:text-lg group-hover:underline">
+              <h2 className="line-clamp-2 font-head text-sm sm:text-base lg:text-lg leading-snug group-hover:underline">
                 {event.title}
               </h2>
 
@@ -407,13 +413,13 @@ function GateEventCard({
             </div>
 
             {/* Rodapé Operacional */}
-            <div className="mt-3 flex items-center justify-between gap-2 border-t-2 border-dashed border-black/20 pt-2 font-mono text-xs">
-              <span className="flex items-center gap-1 text-muted-foreground">
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t-2 border-dashed border-black/20 pt-2 font-mono text-xs">
+              <span className="flex items-center gap-1 text-muted-foreground text-[11px] sm:text-xs">
                 <Ticket className="size-3.5" />
                 <strong className="text-foreground">{ticketsCount}</strong> vendidos
               </span>
 
-              <span className="inline-flex items-center border border-black bg-primary px-2.5 py-1 font-head text-xs font-bold text-primary-foreground shadow-xs transition-colors group-hover:bg-primary-hover">
+              <span className="inline-flex items-center border border-black bg-primary px-2 sm:px-2.5 py-0.5 sm:py-1 font-head text-[11px] sm:text-xs font-bold text-primary-foreground shadow-xs transition-colors group-hover:bg-primary-hover">
                 Validar <ChevronRight className="size-3.5 ml-0.5" />
               </span>
             </div>

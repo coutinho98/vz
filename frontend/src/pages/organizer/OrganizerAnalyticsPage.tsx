@@ -43,17 +43,17 @@ function KpiCard({
   icon: typeof Banknote;
 }) {
   return (
-    <div className="rounded border-2 border-black bg-card p-4 shadow-md">
+    <div className="rounded border-2 border-black bg-card p-3.5 sm:p-4 shadow-md">
       <div className="flex items-center justify-between gap-2">
-        <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+        <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground truncate">
           {label}
         </p>
         <span className="flex size-7 shrink-0 items-center justify-center border-2 border-black bg-primary">
           <Icon className="size-3.5" aria-hidden />
         </span>
       </div>
-      <p className="mt-2 font-head text-2xl tracking-tight">{value}</p>
-      {sub && <p className="mt-0.5 font-mono text-xs text-muted-foreground">{sub}</p>}
+      <p className="mt-2 font-head text-xl sm:text-2xl tracking-tight break-words">{value}</p>
+      {sub && <p className="mt-0.5 font-mono text-xs text-muted-foreground truncate">{sub}</p>}
     </div>
   );
 }
@@ -68,12 +68,12 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded border-2 border-black bg-card p-4 shadow-md">
-      <h2 className="font-head text-lg tracking-tight">{title}</h2>
+    <section className="rounded border-2 border-black bg-card p-3.5 sm:p-4 shadow-md">
+      <h2 className="font-head text-base sm:text-lg tracking-tight">{title}</h2>
       {description && (
-        <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">{description}</p>
       )}
-      <div className="mt-4">{children}</div>
+      <div className="mt-3 sm:mt-4">{children}</div>
     </section>
   );
 }
@@ -86,32 +86,36 @@ function dayParts(date: string) {
 function SalesChart({ data, windowDays }: { data: OrganizerStatsDay[]; windowDays: number }) {
   const max = Math.max(...data.map((d) => d.revenueCents), 1);
   return (
-    <div
-      className="flex h-52 items-end gap-1.5"
-      role="img"
-      aria-label={`Receita por dia nos últimos ${windowDays} dias`}
-    >
-      {data.map((d, i) => {
-        const { m, d: day } = dayParts(d.date);
-        const pct = d.revenueCents > 0 ? Math.max((d.revenueCents / max) * 100, 8) : 0;
-        const isToday = i === data.length - 1;
-        return (
-          <div key={d.date} className="flex h-full flex-1 flex-col justify-end gap-1.5">
-            <div
-              className={`border-2 ${
-                d.revenueCents > 0
-                  ? 'border-black bg-primary'
-                  : 'border-black/25 bg-muted/60'
-              } ${isToday ? 'shadow-sm' : ''}`}
-              style={{ height: `${pct}%`, minHeight: 4 }}
-              title={`${day}/${m} — ${d.tickets} ingresso${d.tickets === 1 ? '' : 's'} · ${formatBRL(d.revenueCents)}`}
-            />
-            <span className="text-center font-mono text-[9px] text-muted-foreground">
-              {day}
-            </span>
-          </div>
-        );
-      })}
+    <div className="overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
+      <div
+        className={`flex h-48 sm:h-52 items-end gap-1 sm:gap-1.5 ${
+          windowDays > 14 ? 'min-w-[440px]' : windowDays > 7 ? 'min-w-[300px]' : 'w-full'
+        }`}
+        role="img"
+        aria-label={`Receita por dia nos últimos ${windowDays} dias`}
+      >
+        {data.map((d, i) => {
+          const { m, d: day } = dayParts(d.date);
+          const pct = d.revenueCents > 0 ? Math.max((d.revenueCents / max) * 100, 8) : 0;
+          const isToday = i === data.length - 1;
+          return (
+            <div key={d.date} className="flex h-full flex-1 flex-col justify-end gap-1">
+              <div
+                className={`border-2 transition-all ${
+                  d.revenueCents > 0
+                    ? 'border-black bg-primary hover:bg-primary-hover'
+                    : 'border-black/25 bg-muted/60'
+                } ${isToday ? 'shadow-sm ring-1 ring-black' : ''}`}
+                style={{ height: `${pct}%`, minHeight: 4 }}
+                title={`${day}/${m} — ${d.tickets} ingresso${d.tickets === 1 ? '' : 's'} · ${formatBRL(d.revenueCents)}`}
+              />
+              <span className="text-center font-mono text-[8px] sm:text-[9px] text-muted-foreground">
+                {day}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -208,10 +212,10 @@ export default function OrganizerAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-head text-3xl tracking-tight">Analytics</h1>
-          <p className="mt-1 text-muted-foreground">
+          <h1 className="font-head text-2xl sm:text-3xl tracking-tight">Analytics</h1>
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">
             Acompanhe vendas, receita e ocupação dos seus eventos.
           </p>
         </div>
@@ -256,7 +260,7 @@ export default function OrganizerAnalyticsPage() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
               label="Receita total"
               value={formatBRL(totals.revenueCents)}
@@ -325,8 +329,53 @@ export default function OrganizerAnalyticsPage() {
             title="Desempenho por evento"
             description="Todas as sessões, ordenadas por receita"
           >
-            <div className="max-h-[28rem] overflow-auto">
-              <Table className="min-w-[720px]">
+            {/* Visualização em Cards para Mobile (md:hidden) */}
+            <div className="space-y-3 md:hidden">
+              {eventsRanked.map((e) => (
+                <div
+                  key={e.id}
+                  className="rounded border-2 border-black bg-background p-3 space-y-2.5 shadow-xs"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-head text-sm leading-snug">{e.title}</p>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {formatSessionDateTime(e.startsAt)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 border-2 border-black bg-primary px-2 py-0.5 font-head text-xs shadow-xs">
+                      {formatBRL(e.revenueCents)}
+                    </span>
+                  </div>
+
+                  {e.status !== 'PUBLISHED' && (
+                    <Badge tone="zinc" className="text-[10px]">
+                      {e.status === 'DRAFT' ? 'Não lançado' : 'Cancelado'}
+                    </Badge>
+                  )}
+
+                  <div className="space-y-1 border-t border-dashed border-black/20 pt-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-muted-foreground">
+                        Vendidos: <strong className="text-foreground">{e.sold}</strong> / {e.capacity}
+                      </span>
+                      <span className="font-bold">{e.occupancyPct}% ocupado</span>
+                    </div>
+
+                    <div className="h-2.5 w-full rounded border border-black bg-muted/50 overflow-hidden">
+                      <div
+                        className={`h-full ${e.occupancyPct >= 80 ? 'bg-green-500' : e.occupancyPct >= 40 ? 'bg-primary' : 'bg-[#c5d5ff]'}`}
+                        style={{ width: `${Math.min(e.occupancyPct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Visualização em Tabela para Desktop (hidden md:block) */}
+            <div className="hidden md:block max-h-[28rem] overflow-auto">
+              <Table className="min-w-[680px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Evento</TableHead>

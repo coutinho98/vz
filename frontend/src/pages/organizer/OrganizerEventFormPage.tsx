@@ -193,19 +193,20 @@ export default function OrganizerEventFormPage() {
       {!editing && (
         <Card>
           <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-head">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="font-head text-base sm:text-lg">
                 1 · Catálogo{' '}
                 <span className="font-mono text-xs uppercase text-muted-foreground">
                   ({category === 'MOVIE' ? 'TMDB' : 'shows'})
                 </span>
               </h2>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex gap-1 self-start rounded border-2 border-black bg-card p-0.5">
+                <div className="flex w-full sm:w-auto gap-1 rounded border-2 border-black bg-card p-0.5">
                   {(['MOVIE', 'SHOW'] as const).map((c) => (
                     <Button
                       key={c}
                       size="xs"
+                      className="flex-1 sm:flex-none font-bold"
                       variant={category === c ? 'default' : 'ghost'}
                       onClick={() => {
                         setCategory(c);
@@ -220,7 +221,7 @@ export default function OrganizerEventFormPage() {
                   value={catalogSearch}
                   onChange={(e) => setCatalogSearch(e.target.value)}
                   placeholder="Buscar…"
-                  className="w-full sm:w-40"
+                  className="w-full sm:w-44"
                 />
               </div>
             </div>
@@ -228,22 +229,23 @@ export default function OrganizerEventFormPage() {
             {catalogLoading ? (
               <Spinner label="Consultando catálogo…" />
             ) : (
-              <div className="grid max-h-80 grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-4">
+              <div className="grid max-h-80 grid-cols-2 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-4 sm:gap-3">
                 {catalog?.items.map((item) => (
                   <button
                     key={item.ref}
+                    type="button"
                     onClick={() => pickItem(item)}
                     className={cn(
                       'overflow-hidden rounded border-2 border-black bg-card text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow',
                       catalogRef === item.ref && 'ring-4 ring-primary',
                     )}
                   >
-                <div className="aspect-[2/3]">
-                  <Poster src={item.posterUrl} alt={item.title} genre={item.genre ?? undefined} className="border-0" />
-                </div>
+                    <div className="aspect-[2/3]">
+                      <Poster src={item.posterUrl} alt={item.title} genre={item.genre ?? undefined} className="border-0" />
+                    </div>
                     <div className="border-t-2 border-black p-2">
                       <p className="line-clamp-2 text-xs font-bold leading-snug">{item.title}</p>
-                      <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                      <p className="mt-0.5 truncate font-mono text-[10px] sm:text-[11px] text-muted-foreground">
                         {item.genre ?? item.releaseYear ?? ''}
                       </p>
                     </div>
@@ -373,9 +375,9 @@ export default function OrganizerEventFormPage() {
                             <Button
                               type="button"
                               variant="outline"
-                              size="icon-sm"
+                              size="sm"
                               aria-label="Remover sessão"
-                              className="shrink-0 self-center"
+                              className="size-10 shrink-0 self-center font-bold text-base"
                               onClick={() =>
                                 setSessions((prev) => prev.filter((_, i) => i !== index))
                               }
@@ -391,7 +393,8 @@ export default function OrganizerEventFormPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    size="xs"
+                    size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => setSessions((prev) => [...prev, ''])}
                   >
                     + Adicionar sessão
@@ -417,7 +420,7 @@ export default function OrganizerEventFormPage() {
               <>
                 <div className="space-y-1.5">
                   <Label>Formato do espaço</Label>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     {(
                       [
                         { mode: 'SEATED', title: 'Assentos marcados', hint: 'Cinema / teatro com mapa' },
@@ -429,7 +432,7 @@ export default function OrganizerEventFormPage() {
                         key={opt.mode}
                         onClick={() => setSeatingMode(opt.mode)}
                         className={cn(
-                          'rounded border-2 border-black p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow',
+                          'rounded border-2 border-black p-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow',
                           seatingMode === opt.mode ? 'bg-primary' : 'bg-card',
                         )}
                       >
@@ -441,7 +444,7 @@ export default function OrganizerEventFormPage() {
                 </div>
 
                 {seatingMode === 'SEATED' ? (
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="rows">Fileiras (A–Z)</Label>
                       <Input
@@ -468,7 +471,7 @@ export default function OrganizerEventFormPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="max-w-56 space-y-1.5">
+                  <div className="w-full sm:max-w-xs space-y-1.5">
                     <Label htmlFor="capacity">Capacidade (pista)</Label>
                     <Input
                       id="capacity"
@@ -486,7 +489,13 @@ export default function OrganizerEventFormPage() {
             {error && <ErrorBox message={error} />}
 
             <div className="flex flex-col-reverse gap-3 border-t-2 border-dashed border-black/30 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <Button variant="ghost" type="button" nativeButton={false} render={<Link to="/organizador" />}>
+              <Button
+                variant="ghost"
+                type="button"
+                className="w-full sm:w-auto"
+                nativeButton={false}
+                render={<Link to="/organizador" />}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={create.isPending} className="w-full sm:w-auto">
@@ -513,8 +522,8 @@ export default function OrganizerEventFormPage() {
       </Card>
 
       {!editing && form.title && (
-        <p className="text-center font-mono text-xs text-muted-foreground">
-          selecionado: <Badge>{form.title}</Badge>
+        <p className="text-center font-mono text-xs text-muted-foreground px-2 break-words">
+          selecionado: <Badge className="inline-block max-w-full truncate align-middle">{form.title}</Badge>
         </p>
       )}
     </div>
