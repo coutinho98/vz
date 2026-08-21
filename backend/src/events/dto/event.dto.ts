@@ -134,6 +134,30 @@ export class QueryEventsDto {
   city?: string;
 
   @IsOptional()
+  @IsIn(['SEATED', 'STANDING'])
+  seatingMode?: 'SEATED' | 'STANDING';
+
+  @IsOptional()
+  @IsIn(['all', 'today', 'weekend', 'week', 'month'])
+  timeframe?: 'all' | 'today' | 'weekend' | 'week' | 'month';
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  minPriceCents?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  maxPriceCents?: number;
+
+  @IsOptional()
+  @IsIn(['date_asc', 'price_asc', 'price_desc', 'title_asc'])
+  sortBy?: 'date_asc' | 'price_asc' | 'price_desc' | 'title_asc';
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
