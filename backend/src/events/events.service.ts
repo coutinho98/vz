@@ -118,9 +118,11 @@ export class EventsService {
 
   async listPublished(query: QueryEventsDto) {
     const page = query.page ?? 1;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
     const where: Prisma.EventWhereInput = {
       status: 'PUBLISHED',
-      startsAt: { gt: new Date() }, // esconde eventos passados
+      startsAt: { gte: startOfToday },
       ...(query.category ? { category: query.category } : {}),
       ...(query.city
         ? { city: { contains: query.city, mode: 'insensitive' } }
@@ -214,7 +216,6 @@ export class EventsService {
     });
   }
 
-  // painel de analytics do organizador: agrega vendas, receita e check-ins
   async stats(user: AuthUser) {
     const events = await this.prisma.event.findMany({
       where: { organizerId: user.id },
@@ -262,7 +263,6 @@ export class EventsService {
         d.getDate(),
       ).padStart(2, '0')}`;
 
-    // janela dos últimos 14 dias (inclusive hoje), já zerada
     const salesByDay: { date: string; tickets: number; revenueCents: number }[] =
       [];
     const byDay = new Map<string, (typeof salesByDay)[number]>();
@@ -284,8 +284,6 @@ export class EventsService {
     };
     const byEvent = new Map<string, { sold: number; revenueCents: number }>();
 
-    // ingressos criados antes da coluna priceCents (e os do seed) ficaram com 0:
-    // deriva o preço unitário a partir do preço do evento
     const eventPrice = new Map(events.map((e) => [e.id, e.priceCents]));
     const unitPrice = (t: { eventId: string; kind: string; priceCents: number }) => {
       if (t.priceCents > 0) return t.priceCents;
@@ -379,10 +377,12 @@ export class EventsService {
       { id: event.id, startsAt: event.startsAt, room: event.room },
     ];
     if (event.category === 'MOVIE') {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
       sessions = await this.prisma.event.findMany({
         where: {
           status: 'PUBLISHED',
-          startsAt: { gt: new Date() },
+          startsAt: { gte: startOfToday },
           venue: event.venue,
           city: event.city,
           ...(event.catalogRef
@@ -394,10 +394,13 @@ export class EventsService {
       });
     }
 
-    const trailer = await this.catalog.getTrailer(
-      event.catalogRef ?? undefined,
-      event.title,
-    );
+    const trailer =
+      event.category === 'MOVIE'
+        ? await this.catalog.getTrailer(
+            event.catalogRef ?? undefined,
+            event.title,
+          )
+        : { youtubeKey: null, title: null };
 
     return {
       ...event,

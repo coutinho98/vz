@@ -26,6 +26,10 @@ export default function EventCard({ event }: { event: EventItem }) {
   const soldOut = available !== undefined && available === 0;
   const lowStock = available !== undefined && available > 0 && available <= LOW_STOCK_THRESHOLD;
 
+  const now = new Date();
+  const isToday = start.toDateString() === now.toDateString();
+  const started = start.getTime() < now.getTime();
+
   return (
     <Link
       to={`/eventos/${event.id}`}
@@ -78,6 +82,7 @@ export default function EventCard({ event }: { event: EventItem }) {
               <Badge tone="outline">
                 {event.seatingMode === 'SEATED' ? 'Assentos' : 'Pista'}
               </Badge>
+              {isToday && (started ? <Badge tone="success">Em andamento</Badge> : <Badge tone="amber">Hoje</Badge>)}
             </div>
             <h3 className="line-clamp-2 font-head text-base leading-snug sm:text-lg">
               {event.title}

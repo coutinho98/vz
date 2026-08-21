@@ -167,15 +167,6 @@ export class CatalogService {
         youtubeKey: 'zSWdZVtXT7E',
         title: 'Interestelar',
       },
-      'show-coldplay': {
-        youtubeKey: 'V3ZhpFXzL1g',
-        title: 'Coldplay - Music of the Spheres',
-      },
-      'show-alok': { youtubeKey: 'sW8YtF7Gk1U', title: 'Alok - Live Show' },
-      'show-orquestra': {
-        youtubeKey: 'Q_k8QZ7x5j4',
-        title: 'Orquestra Petrobras Sinfônica',
-      },
     };
 
     if (ref && staticTrailers[ref]) {

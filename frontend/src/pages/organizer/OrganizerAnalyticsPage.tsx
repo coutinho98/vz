@@ -77,7 +77,6 @@ function Panel({
   );
 }
 
-// 'yyyy-mm-dd' -> partes locais, sem new Date() pra não deslocar o dia no fuso
 function dayParts(date: string) {
   const [y, m, d] = date.split('-');
   return { y, m, d };
@@ -175,7 +174,6 @@ export default function OrganizerAnalyticsPage() {
 
   if (isPending) return <Spinner label="Carregando analytics…" />;
   if (isError) return <ErrorBox message={apiErrorMessage(error)} />;
-  // fallbacks defensivos: resposta antiga/sem campo não derruba a tela
   const totals = stats.totals ?? {
     eventsTotal: 0,
     eventsPublished: 0,

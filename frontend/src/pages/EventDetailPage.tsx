@@ -24,9 +24,6 @@ const FALLBACK_TRAILERS: Record<string, string> = {
   'movie-interstellar': 'zSWdZVtXT7E',
   'movie-cidade-de-deus': 'dcUOO4Itgmw',
   'movie-tudo-em-todo-lugar': 'wxN1T1uxQ2g',
-  'show-coldplay': 'V3ZhpFXzL1g',
-  'show-orquestra': 'Q_k8QZ7x5j4',
-  'show-alok': 'sW8YtF7Gk1U',
 };
 
 export default function EventDetailPage() {
@@ -60,17 +57,20 @@ export default function EventDetailPage() {
       );
       return res.data;
     },
-    enabled: !!event,
+    enabled: !!event && event.category === 'MOVIE',
     staleTime: 1000 * 60 * 60,
   });
 
+  // shows não têm trailer na base do tmdb - sem chave, sem botão
   const youtubeKey =
-    event?.trailer?.youtubeKey ||
-    trailer?.youtubeKey ||
-    (event?.catalogRef ? FALLBACK_TRAILERS[event.catalogRef] : null) ||
-    (event?.title?.toLowerCase().includes('homem-aranha') ? 'JfVOs4VSpmA' : null) ||
-    (event?.title?.toLowerCase().includes('boca do diabo') ? '73_1biulkYk' : null) ||
-    (event?.title?.toLowerCase().includes('oppenheimer') ? 'uYPbbksJxIg' : null);
+    event?.category !== 'MOVIE'
+      ? null
+      : event?.trailer?.youtubeKey ||
+        trailer?.youtubeKey ||
+        (event?.catalogRef ? FALLBACK_TRAILERS[event.catalogRef] : null) ||
+        (event?.title?.toLowerCase().includes('homem-aranha') ? 'JfVOs4VSpmA' : null) ||
+        (event?.title?.toLowerCase().includes('boca do diabo') ? '73_1biulkYk' : null) ||
+        (event?.title?.toLowerCase().includes('oppenheimer') ? 'uYPbbksJxIg' : null);
 
   const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
   const [quantity, setQuantity] = useState(1);

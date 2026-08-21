@@ -4,8 +4,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Timer, QrCode, Barcode as BarcodeIcon, CreditCard } from 'lucide-react';
 import type { Reservation, Ticket } from '../api/types';
-import { api, formatBRL, formatDateTime } from '../api/client';
+import { api, apiErrorMessage, formatBRL, formatDateTime } from '../api/client';
 import { Badge, Poster, Spinner } from '../components/ui';
+import { useToast } from '../components/Toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ function useCountdown(expiresAt: string) {
 
 function PendingReservationCard({ reservation }: { reservation: Reservation }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { left, label } = useCountdown(reservation.expiresAt);
 
   const cancel = useMutation({
@@ -51,6 +53,10 @@ function PendingReservationCard({ reservation }: { reservation: Reservation }) {
       void queryClient.invalidateQueries({ queryKey: ['reservations'] });
       void queryClient.invalidateQueries({ queryKey: ['seats'] });
       void queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({ title: 'Reserva cancelada', description: 'Os assentos voltaram para a venda.' });
+    },
+    onError: (err) => {
+      toast({ title: 'Não foi possível cancelar', description: apiErrorMessage(err), variant: 'error' });
     },
   });
 
@@ -108,6 +114,7 @@ function Barcode({ code, className = '' }: { code: string; className?: string })
 
 function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [confirming, setConfirming] = useState(false);
   const shareUrl = `${window.location.origin}/t/${ticket.code}`;
 
@@ -121,6 +128,13 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
       void queryClient.invalidateQueries({ queryKey: ['reservations'] });
       void queryClient.invalidateQueries({ queryKey: ['seats'] });
       void queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: 'Compra cancelada',
+        description: `Estorno de ${formatBRL(ticket.priceCents ?? 0)} solicitado.`,
+      });
+    },
+    onError: (err) => {
+      toast({ title: 'Não foi possível cancelar', description: apiErrorMessage(err), variant: 'error' });
     },
   });
 

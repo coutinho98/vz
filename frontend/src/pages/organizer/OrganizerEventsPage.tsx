@@ -1,9 +1,21 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EventItem } from '../../api/types';
 import { api, apiErrorMessage, formatBRL } from '../../api/client';
 import { Badge, ErrorBox, Spinner } from '../../components/ui';
+import { useToast } from '../../components/Toast';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -26,6 +38,8 @@ function formatSessionDateTime(iso: string) {
 
 export default function OrganizerEventsPage() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [cancelIds, setCancelIds] = useState<string[] | null>(null);
 
   const { data: events, isPending, isError, error } = useQuery<EventItem[]>({
     queryKey: ['organizer-events'],
@@ -44,7 +58,30 @@ export default function OrganizerEventsPage() {
         await api.post(`/events/${id}/${action}`);
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['organizer-events'] }),
+    onSuccess: (_data, vars) => {
+      void queryClient.invalidateQueries({ queryKey: ['organizer-events'] });
+      void queryClient.invalidateQueries({ queryKey: ['organizer-stats'] });
+      if (vars.action === 'publish') {
+        toast({
+          title:
+            vars.ids.length > 1
+              ? `${vars.ids.length} sessões publicadas`
+              : 'Sessão publicada',
+          description: 'O evento já está visível na vitrine.',
+        });
+      } else {
+        toast({
+          title:
+            vars.ids.length > 1
+              ? `${vars.ids.length} sessões canceladas`
+              : 'Sessão cancelada',
+          description: 'Ingressos vendidos foram estornados.',
+        });
+      }
+    },
+    onError: (err) => {
+      toast({ title: 'Não foi possível concluir', description: apiErrorMessage(err), variant: 'error' });
+    },
   });
 
   return (
@@ -99,11 +136,14 @@ export default function OrganizerEventsPage() {
                           ? `${event.rowsCount}×${event.seatsPerRow}`
                           : `pista ${event.capacity}p`}
                       </p>
-                      {(event.sessionCount ?? 0) > 1 && (
-                        <Badge tone="outline" className="mt-1">
-                          {event.sessionCount} sessões
-                        </Badge>
-                      )}
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {allDraft && <Badge tone="zinc">Não lançado</Badge>}
+                        {(event.sessionCount ?? 0) > 1 && (
+                          <Badge tone="outline">
+                            {event.sessionCount} sessões
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
@@ -128,7 +168,7 @@ export default function OrganizerEventsPage() {
                                 aria-label={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
                                 title={`Cancelar sessão de ${formatSessionDateTime(s.startsAt)}`}
                                 disabled={act.isPending}
-                                onClick={() => act.mutate({ ids: [s.id], action: 'cancel' })}
+                                onClick={() => setCancelIds([s.id])}
                                 className="flex size-4 cursor-pointer items-center justify-center border border-black bg-card text-[9px] font-bold text-muted-foreground transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
                               >
                                 ×
@@ -175,21 +215,14 @@ export default function OrganizerEventsPage() {
                             >
                               Portaria
                             </Button>
-                            {published.length > 1 && (
-                              <Button
-                                variant="destructive"
-                                size="xs"
-                                disabled={act.isPending}
-                                onClick={() =>
-                                  act.mutate({
-                                    ids: published.map((s) => s.id),
-                                    action: 'cancel',
-                                  })
-                                }
-                              >
-                                Cancelar todas
-                              </Button>
-                            )}
+                            <Button
+                              variant="destructive"
+                              size="xs"
+                              disabled={act.isPending}
+                              onClick={() => setCancelIds(published.map((s) => s.id))}
+                            >
+                              Cancelar {published.length > 1 ? 'todas' : ''}
+                            </Button>
                           </>
                         )}
                         {allPublished && (
@@ -206,6 +239,37 @@ export default function OrganizerEventsPage() {
       )}
 
       {act.isError && <ErrorBox message={apiErrorMessage(act.error)} />}
+
+      <AlertDialog open={!!cancelIds} onOpenChange={(o) => !o && setCancelIds(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Cancelar {(cancelIds?.length ?? 0) > 1 ? `${cancelIds!.length} sessões` : 'sessão'}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Ingressos vendidos serão estornados pela forma de pagamento
+              original e a sessão sai da vitrine. Essa ação não pode ser
+              desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel size="sm" disabled={act.isPending}>
+              Voltar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              size="sm"
+              disabled={act.isPending}
+              onClick={() => {
+                if (cancelIds) act.mutate({ ids: cancelIds, action: 'cancel' });
+                setCancelIds(null);
+              }}
+            >
+              {act.isPending ? 'Cancelando…' : 'Confirmar cancelamento'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
