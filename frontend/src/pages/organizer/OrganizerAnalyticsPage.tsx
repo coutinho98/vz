@@ -299,7 +299,7 @@ export default function OrganizerAnalyticsPage() {
                         <p className="font-bold">{e.title}</p>
                         {e.status !== 'PUBLISHED' && (
                           <Badge tone="zinc" className="mt-1">
-                            {e.status === 'DRAFT' ? 'Rascunho' : 'Cancelado'}
+                            {e.status === 'DRAFT' ? 'Não lançado' : 'Cancelado'}
                           </Badge>
                         )}
                       </TableCell>
