@@ -222,10 +222,10 @@ export default function GateCheckPage() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="space-y-4">
+      <Card className="shadow-xs sm:shadow-sm">
+        <CardContent className="space-y-4 p-3.5 sm:p-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-head">Leitor de QR Code</h2>
+            <h2 className="font-head text-base sm:text-lg">Leitor de QR Code</h2>
             {cameraOn ? (
               <Button variant="outline" size="sm" onClick={() => void stopCamera()}>
                 Parar câmera
@@ -238,7 +238,7 @@ export default function GateCheckPage() {
           </div>
 
           <div
-            className={`relative min-h-[260px] sm:min-h-[320px] overflow-hidden rounded border-2 ${
+            className={`relative min-h-[240px] sm:min-h-[300px] overflow-hidden rounded border-2 ${
               cameraOn || starting
                 ? 'border-black bg-black'
                 : 'border-dashed border-black/40 bg-muted/40'
@@ -277,8 +277,8 @@ export default function GateCheckPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="space-y-3">
+      <Card className="shadow-xs sm:shadow-sm">
+        <CardContent className="space-y-3 p-3.5 sm:p-4">
           <h2 className="font-head text-base sm:text-lg">Digitação manual</h2>
           <p className="font-mono text-xs text-muted-foreground">
             código do ingresso (ING-XXXXX-XXXXX) ou cole o link /t/…
