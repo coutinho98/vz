@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Banknote,
@@ -82,13 +83,13 @@ function dayParts(date: string) {
   return { y, m, d };
 }
 
-function SalesChart({ data }: { data: OrganizerStatsDay[] }) {
+function SalesChart({ data, windowDays }: { data: OrganizerStatsDay[]; windowDays: number }) {
   const max = Math.max(...data.map((d) => d.revenueCents), 1);
   return (
     <div
       className="flex h-52 items-end gap-1.5"
       role="img"
-      aria-label="Receita por dia nos últimos 14 dias"
+      aria-label={`Receita por dia nos últimos ${windowDays} dias`}
     >
       {data.map((d, i) => {
         const { m, d: day } = dayParts(d.date);
@@ -167,13 +168,23 @@ function formatSessionDateTime(iso: string) {
 }
 
 export default function OrganizerAnalyticsPage() {
+  const [days, setDays] = useState<7 | 14 | 30>(14);
+  const [city, setCity] = useState('');
+
   const { data: stats, isPending, isError, error } = useQuery<OrganizerStats>({
-    queryKey: ['organizer-stats'],
-    queryFn: async () => (await api.get<OrganizerStats>('/events/mine/stats')).data,
+    queryKey: ['organizer-stats', days, city],
+    queryFn: async () => {
+      const params = new URLSearchParams({ days: String(days) });
+      if (city) params.set('city', city);
+      return (await api.get<OrganizerStats>(`/events/mine/stats?${params}`)).data;
+    },
   });
 
+  const cities = stats?.cities ?? [];
+  const windowDays = stats?.windowDays ?? days;
+
   if (isPending) return <Spinner label="Carregando analytics…" />;
-  if (isError) return <ErrorBox message={apiErrorMessage(error)} />;
+  if (isError || !stats) return <ErrorBox message={apiErrorMessage(error)} />;
   const totals = stats.totals ?? {
     eventsTotal: 0,
     eventsPublished: 0,
@@ -197,11 +208,46 @@ export default function OrganizerAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-head text-3xl tracking-tight">Analytics</h1>
-        <p className="mt-1 text-muted-foreground">
-          Acompanhe vendas, receita e ocupação dos seus eventos.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-head text-3xl tracking-tight">Analytics</h1>
+          <p className="mt-1 text-muted-foreground">
+            Acompanhe vendas, receita e ocupação dos seus eventos.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex border-2 border-black bg-card shadow-sm">
+            {([7, 14, 30] as const).map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setDays(d)}
+                className={`cursor-pointer px-2.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wide transition ${
+                  d === windowDays
+                    ? 'bg-black text-background'
+                    : 'text-muted-foreground hover:bg-muted'
+                } ${d === 7 ? '' : 'border-l-2 border-black'}`}
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
+          {cities.length > 1 && (
+            <select
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              aria-label="Filtrar por cidade"
+              className="cursor-pointer border-2 border-black bg-card px-2.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wide shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <option value="">Todas as cidades</option>
+              {cities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       {totals.eventsTotal === 0 ? (
@@ -240,7 +286,7 @@ export default function OrganizerAnalyticsPage() {
             <KpiCard
               label="Eventos"
               value={String(totals.eventsPublished)}
-              sub={`${totals.eventsTotal} no total`}
+              sub={`${totals.eventsTotal} ${city ? 'em ' + city : 'no total'}`}
               icon={CalendarDays}
             />
           </div>
@@ -249,9 +295,9 @@ export default function OrganizerAnalyticsPage() {
             <div className="lg:col-span-2">
               <Panel
                 title="Vendas por dia"
-                description="Receita dos ingressos emitidos nos últimos 14 dias"
+                description={`Receita dos ingressos emitidos nos últimos ${windowDays} dias${city ? ` · ${city}` : ''}`}
               >
-                <SalesChart data={salesByDay} />
+                <SalesChart data={salesByDay} windowDays={windowDays} />
               </Panel>
             </div>
             <Panel

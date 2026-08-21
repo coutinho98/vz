@@ -32,8 +32,16 @@ export class EventsController {
 
   @Roles('ORGANIZER')
   @Get('mine/stats')
-  mineStats(@CurrentUser() user: AuthUser) {
-    return this.eventsService.stats(user);
+  mineStats(
+    @CurrentUser() user: AuthUser,
+    @Query('days') days?: string,
+    @Query('city') city?: string,
+  ) {
+    const parsed = days ? Number(days) : undefined;
+    return this.eventsService.stats(user, {
+      ...(Number.isFinite(parsed) ? { days: parsed } : {}),
+      ...(city ? { city } : {}),
+    });
   }
 
   @Public()

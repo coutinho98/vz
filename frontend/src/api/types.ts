@@ -213,6 +213,8 @@ export interface OrganizerStats {
     checkins: number;
   };
   salesByDay: OrganizerStatsDay[];
+  cities?: string[];
+  windowDays?: number;
   eventsRanked?: OrganizerStatsEvent[];
   topEvents?: OrganizerStatsEvent[];
   paymentMethods: {

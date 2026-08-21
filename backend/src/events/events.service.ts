@@ -216,12 +216,20 @@ export class EventsService {
     });
   }
 
-  async stats(user: AuthUser) {
+  async stats(user: AuthUser, query?: { days?: number; city?: string }) {
+    const days = [7, 14, 30].includes(query?.days ?? 14)
+      ? (query?.days ?? 14)
+      : 14;
+
     const events = await this.prisma.event.findMany({
-      where: { organizerId: user.id },
+      where: {
+        organizerId: user.id,
+        ...(query?.city ? { city: query.city } : {}),
+      },
       select: {
         id: true,
         title: true,
+        city: true,
         status: true,
         startsAt: true,
         seatingMode: true,
@@ -232,6 +240,11 @@ export class EventsService {
       },
     });
     const ids = events.map((e) => e.id);
+    const allCities = await this.prisma.event.findMany({
+      where: { organizerId: user.id },
+      select: { city: true },
+      distinct: ['city'],
+    });
 
     const [tickets, payments] = await Promise.all([
       ids.length
@@ -266,7 +279,7 @@ export class EventsService {
     const salesByDay: { date: string; tickets: number; revenueCents: number }[] =
       [];
     const byDay = new Map<string, (typeof salesByDay)[number]>();
-    for (let i = 13; i >= 0; i--) {
+    for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
       d.setDate(d.getDate() - i);
@@ -354,6 +367,8 @@ export class EventsService {
         eventsPublished: events.filter((e) => e.status === 'PUBLISHED').length,
         ...totals,
       },
+      cities: allCities.map((e) => e.city).sort(),
+      windowDays: days,
       salesByDay,
       eventsRanked,
       paymentMethods,

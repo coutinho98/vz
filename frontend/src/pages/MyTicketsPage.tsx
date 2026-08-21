@@ -117,6 +117,9 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
   const { toast } = useToast();
   const [confirming, setConfirming] = useState(false);
   const shareUrl = `${window.location.origin}/t/${ticket.code}`;
+  const canShare =
+    typeof navigator.share === 'function' &&
+    navigator.canShare?.({ url: shareUrl }) !== false;
 
   const cancel = useMutation({
     mutationFn: async () => {
@@ -214,10 +217,36 @@ function TicketCard({ ticket, highlight }: { ticket: Ticket; highlight: boolean 
             <Button
               variant="outline"
               size="xs"
-              onClick={() => void navigator.clipboard?.writeText(shareUrl)}
+              onClick={() => {
+                void navigator.clipboard
+                  ?.writeText(shareUrl)
+                  .then(() =>
+                    toast({ title: 'Link copiado', description: 'Envie para quem for usar o ingresso.' }),
+                  )
+                  .catch(() =>
+                    toast({ title: 'Não foi possível copiar', description: 'Copie o link da barra de endereço.', variant: 'error' }),
+                  );
+              }}
             >
               Copiar link
             </Button>
+            {canShare && (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => {
+                  void navigator
+                    .share({
+                      title: `Ingresso · ${ticket.event.title}`,
+                      text: `${ticket.event.title} · ${formatDateTime(ticket.event.startsAt)}`,
+                      url: shareUrl,
+                    })
+                    .catch(() => {});
+                }}
+              >
+                Compartilhar
+              </Button>
+            )}
             {ticket.status === 'VALID' && (
               <AlertDialog open={confirming} onOpenChange={setConfirming}>
                 <AlertDialogTrigger render={<Button variant="outline" size="xs" />}>
